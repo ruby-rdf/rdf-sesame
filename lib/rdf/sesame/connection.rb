@@ -1,19 +1,53 @@
 require 'net/http'
 
-module RDF module Sesame
+module RDF::Sesame
   ##
-  # A connection to a Sesame 2.0 HTTP server.
+  # A connection to a Sesame 2.0-compatible HTTP server.
   #
-  # @example Opening a connection to a Sesame server
+  # Instances of this class represent HTTP connections to a Sesame server,
+  # abstracting away the protocol and transport-level details of how the
+  # connection is actually established and how requests and responses are
+  # implemented and performed.
+  #
+  # Currently, connections are internally implemented using
+  # [`Net::HTTP`](http://ruby-doc.org/core/classes/Net/HTTP.html) from
+  # Ruby's standard library, and connections are always transient, i.e. they
+  # do not persist from one request to the next and must always be reopened
+  # when used. A future improvement would be to support persistent
+  # `Keep-Alive` connections.
+  #
+  # Connections are at any one time in one of the two states of {#close
+  # closed} or {#open open} (see {#open?}). You do not generally need to
+  # call {#close} explicitly.
+  #
+  # @example Opening a connection to a Sesame server (1)
   #   url  = RDF::URI.new("http://localhost:8080/openrdf-sesame")
   #   conn = RDF::Sesame::Connection.open(url)
+  #   ...
+  #   conn.close
   #
+  # @example Opening a connection to a Sesame server (2)
+  #   RDF::Sesame::Connection.open(url) do |conn|
+  #     ...
+  #   end
+  #
+  # @example Performing an HTTP GET on a Sesame server
+  #   RDF::Sesame::Connection.open(url) do |conn|
+  #     conn.get("/openrdf-sesame/protocol") do |response|
+  #       version = response.body.to_i
+  #     end
+  #   end
+  #
+  # @see http://ruby-doc.org/core/classes/Net/HTTP.html
   class Connection
     # @return [RDF::URI]
     attr_reader :url
 
     # @return [Hash{Symbol => Object}]
     attr_reader :options
+
+    # @return [Hash{String => String}]
+    attr_reader :headers
 
     # @return [Boolean]
     attr_reader :connected
@@ -42,6 +76,8 @@ module RDF module Sesame
     end
 
     ##
+    # Initializes this connection.
+    #
     # @param  [RDF::URI, #to_s]        url
     # @param  [Hash{Symbol => Object}] options
     # @yield  [connection]
@@ -52,6 +88,7 @@ module RDF module Sesame
         else Addressable::URI.parse(url.to_s)
       end
 
+      @headers   = options.delete(:headers) || {}
       @options   = options
       @connected = false
 
@@ -64,41 +101,55 @@ module RDF module Sesame
     end
 
     ##
+    # Returns `true` unless this is an HTTPS connection.
+    #
     # @return [Boolean]
     def insecure?
       !secure?
     end
 
     ##
+    # Returns `true` if this is an HTTPS connection.
+    #
     # @return [Boolean]
     def secure?
       scheme == :https
     end
 
     ##
+    # Returns `:http` or `:https` to indicate whether this is an HTTP or
+    # HTTPS connection, respectively.
+    #
     # @return [Symbol]
     def scheme
       url.scheme.to_s.to_sym
     end
 
     ##
+    # Returns the host name for this connection.
+    #
     # @return [String]
     def host
       url.host.to_s
     end
 
+    alias_method :hostname, :host
+
     ##
+    # Returns the port number for this connection.
+    #
     # @return [Integer]
     def port
       url.port.to_i
     end
 
     ##
-    # Opens the connection to the Sesame server.
+    # Establishes the connection to the Sesame server.
     #
     # @param  [Hash{Symbol => Object}] options
     # @yield  [connection]
     # @yieldparam [Connection] connection
+    # @raise  [TimeoutError] if the connection could not be opened
     # @return [void]
     def open(options = {}, &block)
       unless connected?
@@ -140,7 +191,7 @@ module RDF module Sesame
     # @return [Net::HTTPResponse]
     def get(path, headers = {}, &block)
       Net::HTTP.start(host, port) do |http|
-        response = http.get(path.to_s, headers)
+        response = http.get(path.to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
         else
@@ -148,5 +199,41 @@ module RDF module Sesame
         end
       end
     end
+
+    ##
+    # Performs an HTTP POST request for the given Sesame `path`.
+    #
+    # @param  [String, #to_s]          path
+    # @param  [Hash{String => String}] headers
+    # @yield  [response]
+    # @yieldparam [Net::HTTPResponse] response
+    # @return [Net::HTTPResponse]
+    def post(path, headers = {}, &block)
+      # TODO
+    end
+
+    ##
+    # Performs an HTTP PUT request for the given Sesame `path`.
+    #
+    # @param  [String, #to_s]          path
+    # @param  [Hash{String => String}] headers
+    # @yield  [response]
+    # @yieldparam [Net::HTTPResponse] response
+    # @return [Net::HTTPResponse]
+    def put(path, headers = {}, &block)
+      # TODO
+    end
+
+    ##
+    # Performs an HTTP DELETE request for the given Sesame `path`.
+    #
+    # @param  [String, #to_s]          path
+    # @param  [Hash{String => String}] headers
+    # @yield  [response]
+    # @yieldparam [Net::HTTPResponse] response
+    # @return [Net::HTTPResponse]
+    def delete(path, headers = {}, &block)
+      # TODO
+    end
   end
-end end
+end
