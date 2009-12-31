@@ -30,5 +30,6 @@ GEMSPEC = Gem::Specification.new do |gem|
   gem.add_development_dependency 'rspec', '>= 1.2.9'
   gem.add_development_dependency 'yard' , '>= 0.5.2'
   gem.add_runtime_dependency     'rdf',   '>= 0.0.6'
+  gem.add_runtime_dependency     'json',  '>= 1.2.0'
   gem.post_install_message       = nil
 end

@@ -16,6 +16,7 @@ Dependencies
 ------------
 
 * [RDF.rb](http://rdf.rubyforge.org/) (>= 0.0.6)
+* [JSON](http://flori.github.com/json/) (>= 1.2.0)
 
 Installation
 ------------
