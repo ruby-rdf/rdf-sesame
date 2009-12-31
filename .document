@@ -2,4 +2,7 @@ README
 AUTHORS
 UNLICENSE
 VERSION
-lib/**/*.rb
+lib/rdf/sesame.rb
+lib/rdf/sesame/connection.rb
+lib/rdf/sesame/repository.rb
+lib/rdf/sesame/version.rb
