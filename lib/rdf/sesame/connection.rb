@@ -84,19 +84,13 @@ module RDF::Sesame
     # @yieldparam [Connection]
     def initialize(url, options = {}, &block)
       @url = case url
-        when RDF::URI         then url.to_uri
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
       end
 
-      # Preserve only those URI components we require for establishing a
-      # connection to the HTTP server in question:
-      @url = Addressable::URI.new({
-        :scheme   => @url.scheme,
-        :userinfo => @url.userinfo,
-        :host     => @url.host,
-        :port     => @url.port,
-      })
+      # Preserve only those URI components that we actually require for
+      # establishing a connection to the HTTP server in question:
+      @url = RDF::URI.new(Addressable::URI.new(to_hash))
 
       @headers   = options.delete(:headers) || {}
       @options   = options
@@ -209,6 +203,35 @@ module RDF::Sesame
     # @return [Integer]
     def port
       url.port
+    end
+
+    ##
+    # Returns a `Hash` representation of this connection.
+    #
+    # @return [Hash{Symbol => Object}]
+    def to_hash
+      {
+        :scheme   => url.scheme,
+        :userinfo => url.userinfo,
+        :host     => url.host,
+        :port     => url.port,
+      }
+    end
+
+    ##
+    # Returns the URI representation of this connection.
+    #
+    # @return [RDF::URI]
+    def to_uri
+      url
+    end
+
+    ##
+    # Returns a string representation of this connection.
+    #
+    # @return [String]
+    def to_s
+      url.to_s
     end
 
     ##

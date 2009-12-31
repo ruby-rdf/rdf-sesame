@@ -51,4 +51,13 @@ describe RDF::Sesame::Connection do
   it "should support HTTP DELETE requests" do
     @conn.should respond_to(:delete)
   end
+
+  it "should have a URI representation" do
+    @conn.to_uri.should be_a_kind_of(RDF::URI)
+    @conn.to_uri.to_s.should == "http://localhost:8080"
+  end
+
+  it "should have a string representation" do
+    @conn.to_s.should == "http://localhost:8080"
+  end
 end
