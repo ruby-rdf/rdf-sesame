@@ -2,7 +2,7 @@ require 'rdf'
 
 module RDF
   ##
-  # *RDF::Sesame* is a Sesame 2.0 adapter for RDF.rb.
+  # RDF::Sesame is a Sesame 2.0 adapter for RDF.rb.
   #
   # @example Installing the RDF::Sesame plugin
   #   $ sudo gem install rdf-sesame
