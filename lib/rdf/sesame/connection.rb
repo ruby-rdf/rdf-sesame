@@ -10,6 +10,8 @@ module RDF module Sesame
   #
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Connection
+    ACCEPT_JSON = {'Accept' => 'application/sparql-results+json'}
+
     # @return [RDF::URI]
     attr_reader :url
 
@@ -94,13 +96,46 @@ module RDF module Sesame
     # @example Retrieving the protocol version
     #   conn.protocol #=> 4
     #
+    # @return [Integer]
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
     def protocol
-      version = Net::HTTP.get(url(:protocol))
-      version ? version.to_i : version
+      get(:protocol) do |response|
+        case response
+          when Net::HTTPSuccess
+            version = response.body
+            version.to_i rescue 0
+          else 0
+        end
+      end
     end
 
     alias_method :protocol_version, :protocol
+
+    ##
+    # Returns the list of repositories on the Sesame server.
+    #
+    # @return [Array<Repository>]
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
+    def repositories
+      require 'json' unless defined?(JSON)
+
+      get(:repositories, ACCEPT_JSON) do |response|
+        case response
+          when Net::HTTPSuccess
+            json = JSON.parse(response.body)
+            json['results']['bindings'].map do |binding|
+              Repository.new({
+                :uri      => RDF::URI.new(binding['uri']['value']),
+                :id       => binding['id']['value'],
+                :title    => binding['title']['value'],
+                :readable => binding['readable']['value'] == 'true',
+                :writable => binding['writable']['value'] == 'true',
+              })
+            end
+          else [] # FIXME
+        end
+      end
+    end
 
     ##
     # Returns the absolute `URI` for the given server-relative `path`.
@@ -112,5 +147,25 @@ module RDF module Sesame
     end
 
     alias_method :uri, :url
+
+    ##
+    # Performs an HTTP GET operation for the given Sesame `path`.
+    #
+    # @param  [String, #to_s]          path
+    # @param  [Hash{Symbol => Object}] options
+    # @yield  [response]
+    # @yieldparam [Net::HTTPResponse] response
+    # @return [Net::HTTPResponse]
+    def get(path, options = {}, &block)
+      url = self.url(path.to_s)
+      Net::HTTP.start(url.host, url.port) do |http|
+        response = http.get(url.path, options)
+        if block_given?
+          block.call(response)
+        else
+          response
+        end
+      end
+    end
   end
 end end

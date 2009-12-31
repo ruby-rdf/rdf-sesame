@@ -15,4 +15,11 @@ describe RDF::Sesame::Connection do
     @conn.protocol.should be_a_kind_of(Numeric)
     @conn.protocol.should >= 4
   end
+
+  it "should return the list of repositories" do
+    @conn.repositories.should be_a_kind_of(Enumerable)
+    @conn.repositories.each do |repository|
+      repository.should be_instance_of(RDF::Sesame::Repository)
+    end
+  end
 end
