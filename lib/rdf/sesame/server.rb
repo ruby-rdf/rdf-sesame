@@ -1,14 +1,46 @@
 module RDF::Sesame
   ##
-  # A Sesame 2.0 HTTP server.
+  # A Sesame 2.0-compatible HTTP server.
+  #
+  # Instances of this class represent Sesame-compatible servers that contain
+  # one or more readable and/or writable RDF {Repository repositories}.
   #
   # @example Connecting to a Sesame server
   #   url    = RDF::URI.new("http://localhost:8080/openrdf-sesame")
   #   server = RDF::Sesame::Server.new(url)
   #
+  # @example Retrieving the server's protocol version
+  #   server.protocol                 #=> 4
+  #
+  # @example Iterating over available RDF repositories
+  #   server.each_repository do |repository|
+  #     puts repository.inspect
+  #   end
+  #
+  # @example Finding all readable, non-empty RDF repositories
+  #   server.find_all do |repository|
+  #     repository.readable? && !repository.empty?
+  #   end
+  #
+  # @example Checking if any RDF repositories are writable
+  #   server.any? { |repository| repository.writable? }
+  #
+  # @example Checking if a specific RDF repository exists on the server
+  #   server.has_repository?(:SYSTEM) #=> true
+  #   server.has_repository?(:foobar) #=> false
+  #
+  # @example Obtaining a specific RDF repository
+  #   server.repository(:SYSTEM)      #=> RDF::Sesame::Repository(SYSTEM)
+  #   server[:SYSTEM]                 #=> RDF::Sesame::Repository(SYSTEM)
+  #
+  # @see RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Server
+    include Enumerable
+
     ACCEPT_JSON = {'Accept' => 'application/sparql-results+json'}
+    ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}
+    ACCEPT_BOOL = {'Accept' => 'text/boolean'}
 
     # @return [RDF::URI]
     attr_reader :url
@@ -20,8 +52,11 @@ module RDF::Sesame
     attr_reader :connection
 
     ##
+    # Initializes this server instance.
+    #
     # @param  [RDF::URI]               url
     # @param  [Hash{Symbol => Object}] options
+    # @option options [Connection] :connection (nil)
     # @yield  [connection]
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
@@ -29,14 +64,10 @@ module RDF::Sesame
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
       end
+      @url = RDF::URI.new(@url)
 
-      @options = options
-
-      @connection = Connection.new(Addressable::URI.new({
-        :scheme => @url.scheme,
-        :host   => @url.host,
-        :port   => @url.port,
-      }))
+      @connection = options.delete(:connection) || Connection.new(@url)
+      @options    = options
 
       if block_given?
         case block.arity
@@ -47,12 +78,18 @@ module RDF::Sesame
     end
 
     ##
-    # Returns the absolute `URI` for the given server-relative `path`.
+    # Returns the absolute URI for the given server-relative `path`.
     #
-    # @param  [#to_s] path
-    # @return [URI]
+    # @example Getting a Sesame server's URL
+    #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")
+    #
+    # @example Getting a Sesame server's protocol URL
+    #   server.url(:protocol) #=> RDF::URI("http://localhost:8080/openrdf-sesame/protocol")
+    #
+    # @param  [String, #to_s] path
+    # @return [RDF::URI]
     def url(path = nil)
-      Addressable::URI.parse(path ? "#{@url}/#{path}" : @url.to_s) # FIXME
+      path ? RDF::URI.new("#{@url}/#{path}") : @url # FIXME
     end
 
     alias_method :uri, :url
@@ -61,10 +98,10 @@ module RDF::Sesame
     # Returns the Sesame server's protocol version.
     #
     # @example Retrieving the protocol version
-    #   conn.protocol #=> 4
+    #   server.protocol #=> 4
     #
     # @return [Integer]
-    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
     def protocol
       get(:protocol) do |response|
         case response
@@ -79,20 +116,47 @@ module RDF::Sesame
     alias_method :protocol_version, :protocol
 
     ##
-    # Returns a repository on the Sesame server.
+    # Enumerates over each repository on this Sesame server.
+    #
+    # @yield  [repository]
+    # @yieldparam [Repository] repository
+    # @return [Enumerable]
+    # @see    #repository
+    # @see    #repositories
+    def each_repository(&block)
+      repositories.values.each(&block)
+    end
+
+    alias_method :each, :each_repository
+
+    ##
+    # Returns `true` if 
+    #
+    # @param  [id] String
+    # @return [Boolean]
+    def has_repository?(id)
+      repositories.has_key?(id.to_s)
+    end
+
+    ##
+    # Returns a repository on this Sesame server.
     #
     # @param  [String] id
     # @return [Repository]
     # @see    #repositories
+    # @see    #each_repository
     def repository(id)
       repositories[id.to_s]
     end
 
+    alias_method :[], :repository
+
     ##
-    # Returns the list of repositories on the Sesame server.
+    # Returns all repositories on this Sesame server.
     #
     # @return [Hash{String => Repository}]
     # @see    #repository
+    # @see    #each_repository
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
       require 'json' unless defined?(JSON)
@@ -103,13 +167,13 @@ module RDF::Sesame
             json = JSON.parse(response.body)
             json['results']['bindings'].inject({}) do |repositories, binding|
               repository = Repository.new({
-                :uri      => RDF::URI.new(binding['uri']['value']),
-                :id       => binding['id']['value'],
-                :title    => binding['title']['value'],
+                :uri      => (uri   = RDF::URI.new(binding['uri']['value'])),
+                :id       => (id    = binding['id']['value']),
+                :title    => (title = binding['title']['value']),
                 :readable => binding['readable']['value'] == 'true',
                 :writable => binding['writable']['value'] == 'true',
               })
-              repositories.merge({repository.id => repository})
+              repositories.merge({id => repository})
             end
           else [] # FIXME
         end
@@ -119,6 +183,8 @@ module RDF::Sesame
     protected
 
       ##
+      # Performs an HTTP GET request for the given Sesame server `path`.
+      #
       # @param  [String, #to_s]          path
       # @param  [Hash{String => String}] headers
       # @yield  [response]
