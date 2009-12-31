@@ -1,3 +1,5 @@
+require 'net/http'
+
 module RDF module Sesame
   ##
   # A connection to a Sesame 2.0 HTTP server.
@@ -29,7 +31,7 @@ module RDF module Sesame
     # @return [Connection]
     def self.open(url, options = {}, &block)
       self.new(url, options) do |conn|
-        if conn.open && block_given?
+        if conn.open(options) && block_given?
           case block.arity
             when 1 then block.call(conn)
             else conn.instance_eval(&block)
@@ -60,12 +62,14 @@ module RDF module Sesame
     ##
     # Opens the connection to the Sesame server.
     #
+    # @param  [Hash{Symbol => Object}] options
     # @return [Boolean]
-    def open
+    def open(options = {})
       if connected?
         true
       else
-        false # TODO
+        # TODO
+        @connected = true
       end
     end
 
@@ -83,5 +87,30 @@ module RDF module Sesame
     end
 
     alias_method :close!, :close
+
+    ##
+    # Returns the Sesame server's protocol version.
+    #
+    # @example Retrieving the protocol version
+    #   conn.protocol #=> 4
+    #
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
+    def protocol
+      version = Net::HTTP.get(url(:protocol))
+      version ? version.to_i : version
+    end
+
+    alias_method :protocol_version, :protocol
+
+    ##
+    # Returns the absolute `URI` for the given server-relative `path`.
+    #
+    # @param  [#to_s] path
+    # @return [URI]
+    def url(path = nil)
+      ::URI.parse(path ? "#{@url}/#{path}" : @url.to_s) # FIXME
+    end
+
+    alias_method :uri, :url
   end
 end end
