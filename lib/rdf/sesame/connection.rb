@@ -84,9 +84,19 @@ module RDF::Sesame
     # @yieldparam [Connection]
     def initialize(url, options = {}, &block)
       @url = case url
+        when RDF::URI         then url.to_uri
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
       end
+
+      # Preserve only those URI components we require for establishing a
+      # connection to the HTTP server in question:
+      @url = Addressable::URI.new({
+        :scheme   => @url.scheme,
+        :userinfo => @url.userinfo,
+        :host     => @url.host,
+        :port     => @url.port,
+      })
 
       @headers   = options.delete(:headers) || {}
       @options   = options
@@ -126,6 +136,55 @@ module RDF::Sesame
     end
 
     ##
+    # Returns `true` if there is user name and password information for this
+    # connection.
+    #
+    # @return [Boolean]
+    def userinfo?
+      !url.userinfo.nil?
+    end
+
+    ##
+    # Returns any user name and password information for this connection.
+    #
+    # @return [String] "username:password"
+    def userinfo
+      url.userinfo
+    end
+
+    ##
+    # Returns `true` if there is user name information for this connection.
+    #
+    # @return [Boolean]
+    def user?
+      !url.user.nil?
+    end
+
+    ##
+    # Returns any user name information for this connection.
+    #
+    # @return [String]
+    def user
+      url.user
+    end
+
+    ##
+    # Returns `true` if there is password information for this connection.
+    #
+    # @return [Boolean]
+    def password?
+      !url.password.nil?
+    end
+
+    ##
+    # Returns any password information for this connection.
+    #
+    # @return [String]
+    def password
+      url.password
+    end
+
+    ##
     # Returns the host name for this connection.
     #
     # @return [String]
@@ -136,11 +195,20 @@ module RDF::Sesame
     alias_method :hostname, :host
 
     ##
+    # Returns `true` if the port number for this connection differs from the
+    # standard HTTP or HTTPS port number (80 and 443, respectively).
+    #
+    # @return [Boolean]
+    def port?
+      !url.port.nil? && url.port != (insecure? ? 80 : 443)
+    end
+
+    ##
     # Returns the port number for this connection.
     #
     # @return [Integer]
     def port
-      url.port.to_i
+      url.port
     end
 
     ##
@@ -150,7 +218,7 @@ module RDF::Sesame
     # @yield  [connection]
     # @yieldparam [Connection] connection
     # @raise  [TimeoutError] if the connection could not be opened
-    # @return [void]
+    # @return [Connection]
     def open(options = {}, &block)
       unless connected?
         # TODO: support persistent connections
@@ -170,6 +238,8 @@ module RDF::Sesame
 
     ##
     # Closes the connection to the Sesame server.
+    #
+    # You do not generally need to call {#close} explicitly.
     #
     # @return [void]
     def close
