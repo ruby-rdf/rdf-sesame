@@ -1,4 +1,4 @@
-module RDF module Sesame
+module RDF::Sesame
   ##
   # A Sesame 2.0 HTTP server.
   #
@@ -131,4 +131,4 @@ module RDF module Sesame
       end
 
   end
-end end
+end
