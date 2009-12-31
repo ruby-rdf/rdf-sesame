@@ -18,8 +18,15 @@ describe RDF::Sesame::Connection do
 
   it "should return the list of repositories" do
     @conn.repositories.should be_a_kind_of(Enumerable)
-    @conn.repositories.each do |repository|
+    @conn.repositories.each do |identifier, repository|
+      identifier.should be_instance_of(String)
       repository.should be_instance_of(RDF::Sesame::Repository)
     end
+  end
+
+  it "should return individual repositories" do
+    repository = @conn.repository(:SYSTEM)
+    repository.should_not be_nil
+    repository.should be_instance_of(RDF::Sesame::Repository)
   end
 end

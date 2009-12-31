@@ -66,12 +66,16 @@ module RDF module Sesame
     #
     # @param  [Hash{Symbol => Object}] options
     # @return [Boolean]
-    def open(options = {})
+    def open(options = {}, &block)
       if connected?
         true
       else
-        # TODO
         @connected = true
+        if block_given?
+          result = block.call(self)
+          close
+          result
+        end
       end
     end
 
@@ -112,25 +116,35 @@ module RDF module Sesame
     alias_method :protocol_version, :protocol
 
     ##
+    # Returns a repository on the Sesame server.
+    #
+    # @param  [String] id
+    # @return [Repository]
+    # @see    #repositories
+    def repository(id)
+      repositories[id.to_s]
+    end
+
+    ##
     # Returns the list of repositories on the Sesame server.
     #
-    # @return [Array<Repository>]
-    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
+    # @return [Hash{String => Repository}]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
       require 'json' unless defined?(JSON)
-
       get(:repositories, ACCEPT_JSON) do |response|
         case response
           when Net::HTTPSuccess
             json = JSON.parse(response.body)
-            json['results']['bindings'].map do |binding|
-              Repository.new({
+            json['results']['bindings'].inject({}) do |repositories, binding|
+              repository = Repository.new({
                 :uri      => RDF::URI.new(binding['uri']['value']),
                 :id       => binding['id']['value'],
                 :title    => binding['title']['value'],
                 :readable => binding['readable']['value'] == 'true',
                 :writable => binding['writable']['value'] == 'true',
               })
+              repositories.merge({repository.id => repository})
             end
           else [] # FIXME
         end
@@ -143,7 +157,7 @@ module RDF module Sesame
     # @param  [#to_s] path
     # @return [URI]
     def url(path = nil)
-      ::URI.parse(path ? "#{@url}/#{path}" : @url.to_s) # FIXME
+      Addressable::URI.parse(path ? "#{@url}/#{path}" : @url.to_s) # FIXME
     end
 
     alias_method :uri, :url
@@ -157,7 +171,12 @@ module RDF module Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def get(path, options = {}, &block)
-      url = self.url(path.to_s)
+      url = case path
+        when Symbol then self.url(path.to_s)
+        when String then self.url(path)
+        else Addressable::URI.parse(path.to_s)
+      end
+
       Net::HTTP.start(url.host, url.port) do |http|
         response = http.get(url.path, options)
         if block_given?
