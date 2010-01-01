@@ -20,9 +20,11 @@ module RDF::Sesame
   # @see RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Repository < RDF::Repository
+    include Enumerable
+
     # @return [RDF::URI]
-    attr_reader :uri
-    alias_method :url, :uri
+    attr_reader :url
+    alias_method :uri, :url
 
     # @return [String]
     attr_reader :id
@@ -84,5 +86,33 @@ module RDF::Sesame
         end
       end
     end
+
+    ##
+    # Returns the URL for the given repository-relative `path`.
+    #
+    # @param  [String, #to_s] path
+    # @return [RDF::URI]
+    def url(path = nil)
+      path ? RDF::URI.new("#{@uri}/#{path}") : @uri # FIXME
+    end
+
+    alias_method :uri, :url
+
+    protected
+
+      ##
+      # Performs an HTTP GET request for the given Sesame repository `path`.
+      #
+      # @param  [String, #to_s]          path
+      # @param  [Hash{String => String}] headers
+      # @yield  [response]
+      # @yieldparam [Net::HTTPResponse] response
+      # @return [Net::HTTPResponse]
+      def get(path, headers = {}, &block)
+        @server.connection.open do
+          @server.connection.get(url(path), headers, &block)
+        end
+      end
+
   end
 end

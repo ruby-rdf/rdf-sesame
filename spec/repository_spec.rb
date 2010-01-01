@@ -52,4 +52,18 @@ describe RDF::Sesame::Repository do
       end
     end
   end
+
+  context "when used" do
+    before :each do
+      @url = "#{@url}/repositories/SYSTEM"
+      @db  = RDF::Sesame::Repository.new(@url)
+    end
+
+    it "should support URL construction" do
+      @db.should respond_to(:url, :uri)
+      @db.url.should be_instance_of(RDF::URI)
+      @db.url.to_s.should == @url.to_s
+      @db.url(:size).to_s.should == "#{@url}/size"
+    end
+  end
 end
