@@ -38,6 +38,7 @@ module RDF::Sesame
   #     end
   #   end
   #
+  # @see RDF::Sesame
   # @see http://ruby-doc.org/core/classes/Net/HTTP.html
   class Connection
     # @return [RDF::URI]
@@ -83,6 +84,7 @@ module RDF::Sesame
     # @yield  [connection]
     # @yieldparam [Connection]
     def initialize(url, options = {}, &block)
+      require 'addressable/uri' unless defined?(Addressable)
       @url = case url
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
@@ -232,6 +234,14 @@ module RDF::Sesame
     # @return [String]
     def to_s
       url.to_s
+    end
+
+    ##
+    # Returns a developer-friendly representation of this connection.
+    #
+    # @return [String]
+    def inspect
+      sprintf("#<%s:%#0x(%s)>", self.class.name, object_id, to_s)
     end
 
     ##
