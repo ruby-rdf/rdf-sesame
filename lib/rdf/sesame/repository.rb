@@ -99,6 +99,14 @@ module RDF::Sesame
     alias_method :uri, :url
 
     ##
+    # Returns `true` if this repository contains no RDF statements.
+    #
+    # @return [Boolean]
+    def empty?
+      size.zero?
+    end
+
+    ##
     # Returns the number of RDF statements in this repository.
     #
     # @return [Integer] 
