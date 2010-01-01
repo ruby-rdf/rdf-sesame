@@ -128,7 +128,7 @@ module RDF::Sesame
     # @return [Integer]
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
     def protocol
-      get(:protocol) do |response|
+      get(url(:protocol)) do |response|
         case response
           when Net::HTTPSuccess
             version = response.body
@@ -186,7 +186,7 @@ module RDF::Sesame
     def repositories
       require 'json' unless defined?(JSON)
 
-      get(:repositories, ACCEPT_JSON) do |response|
+      get(url(:repositories), ACCEPT_JSON) do |response|
         case response
           when Net::HTTPSuccess
             json = JSON.parse(response.body)
@@ -206,13 +206,22 @@ module RDF::Sesame
       end
     end
 
-    protected
-
-      def get(path, headers = {}, &block) # @private
-        self.connection.open do
-          self.connection.get(url(path), headers, &block)
-        end
+    def get(path, headers = {}, &block) # @private
+      self.connection.open do
+        self.connection.get(path, headers, &block)
       end
+    end
 
+    def post(path, data, headers = {}, &block) # @private
+      self.connection.open do
+        self.connection.post(path, data, headers, &block)
+      end
+    end
+
+    def delete(path, headers = {}, &block) # @private
+      self.connection.open do
+        self.connection.delete(path, headers, &block)
+      end
+    end
   end
 end

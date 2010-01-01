@@ -128,7 +128,7 @@ module RDF::Sesame
     # @return [Integer] 
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def size
-      server_get(url(:size)) do |response|
+      server.get(url(:size)) do |response|
         case response
           when Net::HTTPSuccess
             size = response.body
@@ -144,7 +144,7 @@ module RDF::Sesame
     # @param  [Statement] statement
     # @return [Boolean]
     def has_statement?(statement)
-      server_get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
+      server.get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
@@ -161,7 +161,7 @@ module RDF::Sesame
     # @yieldparam [Statement]
     # @return [Enumerator]
     def each_statement(&block)
-      server_get(url(:statements), 'Accept' => 'text/plain') do |response|
+      server.get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
@@ -173,7 +173,7 @@ module RDF::Sesame
     # @return [Boolean]
     def insert_statement(statement)
       data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
-      server_post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
+      server.post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
           else false
@@ -183,7 +183,7 @@ module RDF::Sesame
 
     # @return [Boolean]
     def delete_statement(statement)
-      server_delete(url(:statements, statement)) do |response|
+      server.delete(url(:statements, statement)) do |response|
         case response
           when Net::HTTPSuccess then true
           else false
@@ -196,33 +196,12 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def clear_statements
-      server_delete(url(:statements)) do |response|
+      server.delete(url(:statements)) do |response|
         case response
           when Net::HTTPSuccess then true
           else false
         end
       end
     end
-
-    protected
-
-      def server_get(path, headers = {}, &block) # @private
-        @server.connection.open do
-          @server.connection.get(path, headers, &block)
-        end
-      end
-
-      def server_post(path, data, headers = {}, &block) # @private
-        @server.connection.open do
-          @server.connection.post(path, data, headers, &block)
-        end
-      end
-
-      def server_delete(path, headers = {}, &block) # @private
-        @server.connection.open do
-          @server.connection.delete(path, headers, &block)
-        end
-      end
-
   end
 end
