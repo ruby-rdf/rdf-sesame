@@ -344,7 +344,14 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def delete(path, headers = {}, &block)
-      # TODO
+      Net::HTTP.start(host, port) do |http|
+        response = http.delete(path.to_s, @headers.merge(headers))
+        if block_given?
+          block.call(response)
+        else
+          response
+        end
+      end
     end
   end
 end
