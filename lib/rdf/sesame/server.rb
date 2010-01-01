@@ -60,6 +60,7 @@ module RDF::Sesame
     # @yield  [connection]
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
+      require 'addressable/uri' unless defined?(Addressable)
       @url = case url
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
@@ -108,6 +109,14 @@ module RDF::Sesame
     # @return [String]
     def to_s
       url.to_s
+    end
+
+    ##
+    # Returns a developer-friendly representation of this instance.
+    #
+    # @return [String]
+    def inspect
+      sprintf("#<%s:%#0x(%s)>", self.class.name, object_id, to_s)
     end
 
     ##
@@ -183,6 +192,7 @@ module RDF::Sesame
             json = JSON.parse(response.body)
             json['results']['bindings'].inject({}) do |repositories, binding|
               repository = Repository.new({
+                :server   => self,
                 :uri      => (uri   = RDF::URI.new(binding['uri']['value'])),
                 :id       => (id    = binding['id']['value']),
                 :title    => (title = binding['title']['value']),
