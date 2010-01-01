@@ -208,17 +208,9 @@ module RDF::Sesame
 
     protected
 
-      ##
-      # Performs an HTTP GET request for the given Sesame server `path`.
-      #
-      # @param  [String, #to_s]          path
-      # @param  [Hash{String => String}] headers
-      # @yield  [response]
-      # @yieldparam [Net::HTTPResponse] response
-      # @return [Net::HTTPResponse]
-      def get(path, headers = {}, &block)
-        @connection.open do
-          @connection.get(url(path), headers, &block)
+      def get(path, headers = {}, &block) # @private
+        self.connection.open do
+          self.connection.get(url(path), headers, &block)
         end
       end
 

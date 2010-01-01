@@ -307,12 +307,20 @@ module RDF::Sesame
     # Performs an HTTP POST request for the given Sesame `path`.
     #
     # @param  [String, #to_s]          path
+    # @param  [String, #to_s]          data
     # @param  [Hash{String => String}] headers
     # @yield  [response]
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
-    def post(path, headers = {}, &block)
-      # TODO
+    def post(path, data, headers = {}, &block)
+      Net::HTTP.start(host, port) do |http|
+        response = http.post(path.to_s, data.to_s, @headers.merge(headers))
+        if block_given?
+          block.call(response)
+        else
+          response
+        end
+      end
     end
 
     ##
