@@ -122,6 +122,22 @@ module RDF::Sesame
       end
     end
 
+    ##
+    # Enumerates each RDF statement in the repository.
+    #
+    # @yield [statement]
+    # @yieldparam [Statement]
+    # @return [Enumerator]
+    def each_statement(&block)
+      get(:statements, 'Accept' => 'text/plain') do |response|
+        case response
+          when Net::HTTPSuccess
+            reader = RDF::NTriples::Reader.new(response.body)
+            reader.each_statement(&block)
+        end
+      end
+    end
+
     protected
 
       def insert_statement(statement)
