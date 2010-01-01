@@ -90,12 +90,26 @@ module RDF::Sesame
     ##
     # Returns the URL for the given repository-relative `path`.
     #
-    # @param  [String, #to_s] path
+    # @param  [String, #to_s]        path
+    # @param  [Hash, RDF::Statement] query
     # @return [RDF::URI]
     def url(path = nil, query = {})
       url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
-      url.query_values = query unless query.nil? || query.empty?
-      url
+      unless query.nil?
+        case query
+          when RDF::Statement
+            writer = RDF::NTriples::Writer.new
+            query  = {
+              :subj => writer.format_value(query.subject),
+              :pred => writer.format_value(query.predicate),
+              :obj  => writer.format_value(query.object),
+            }
+            url.query_values = query
+          when Hash then query
+            url.query_values = query unless query.empty?
+        end
+      end
+      return url
     end
 
     alias_method :uri, :url
@@ -114,7 +128,7 @@ module RDF::Sesame
     # @return [Integer] 
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def size
-      get(:size) do |response|
+      server_get(url(:size)) do |response|
         case response
           when Net::HTTPSuccess
             size = response.body
@@ -130,13 +144,7 @@ module RDF::Sesame
     # @param  [Statement] statement
     # @return [Boolean]
     def has_statement?(statement)
-      writer = RDF::NTriples::Writer.new
-      query  = {
-        :subj => writer.format_value(statement.subject),
-        :pred => writer.format_value(statement.predicate),
-        :obj  => writer.format_value(statement.object),
-      }
-      get(:statements, query, 'Accept' => 'text/plain') do |response|
+      server_get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
@@ -153,7 +161,7 @@ module RDF::Sesame
     # @yieldparam [Statement]
     # @return [Enumerator]
     def each_statement(&block)
-      get(:statements, {}, 'Accept' => 'text/plain') do |response|
+      server_get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
@@ -165,7 +173,7 @@ module RDF::Sesame
     # @return [Boolean]
     def insert_statement(statement)
       data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
-      post(:statements, data, 'Content-Type' => 'text/plain') do |response|
+      server_post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
           else false
@@ -175,7 +183,12 @@ module RDF::Sesame
 
     # @return [Boolean]
     def delete_statement(statement)
-      # TODO
+      server_delete(url(:statements, statement)) do |response|
+        case response
+          when Net::HTTPSuccess then true
+          else false
+        end
+      end
     end
 
     ##
@@ -183,7 +196,7 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def clear_statements
-      delete(:statements) do |response|
+      server_delete(url(:statements)) do |response|
         case response
           when Net::HTTPSuccess then true
           else false
@@ -193,21 +206,21 @@ module RDF::Sesame
 
     protected
 
-      def get(path, query = {}, headers = {}, &block) # @private
+      def server_get(path, headers = {}, &block) # @private
         @server.connection.open do
-          @server.connection.get(url(path, query), headers, &block)
+          @server.connection.get(path, headers, &block)
         end
       end
 
-      def post(path, data, headers = {}, &block) # @private
+      def server_post(path, data, headers = {}, &block) # @private
         @server.connection.open do
-          @server.connection.post(url(path), data, headers, &block)
+          @server.connection.post(path, data, headers, &block)
         end
       end
 
-      def delete(path, headers = {}, &block) # @private
+      def server_delete(path, headers = {}, &block) # @private
         @server.connection.open do
-          @server.connection.delete(url(path), headers, &block)
+          @server.connection.delete(path, headers, &block)
         end
       end
 
