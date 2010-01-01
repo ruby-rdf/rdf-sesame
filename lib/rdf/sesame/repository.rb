@@ -138,21 +138,36 @@ module RDF::Sesame
       end
     end
 
-    protected
-
-      def insert_statement(statement)
-        data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
-        post(:statements, data, 'Content-Type' => 'text/plain') do |response|
-          case response
-            when Net::HTTPSuccess then true
-            else false
-          end
+    # @return [Boolean]
+    def insert_statement(statement)
+      data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
+      post(:statements, data, 'Content-Type' => 'text/plain') do |response|
+        case response
+          when Net::HTTPSuccess then true
+          else false
         end
       end
+    end
 
-      def delete_statement(statement)
-        # TODO
+    # @return [Boolean]
+    def delete_statement(statement)
+      # TODO
+    end
+
+    ##
+    # Deletes all RDF statements from this repository.
+    #
+    # @return [Boolean]
+    def clear_statements
+      delete(:statements) do |response|
+        case response
+          when Net::HTTPSuccess then true
+          else false
+        end
       end
+    end
+
+    protected
 
       def get(path, headers = {}, &block) # @private
         @server.connection.open do
@@ -163,6 +178,12 @@ module RDF::Sesame
       def post(path, data, headers = {}, &block) # @private
         @server.connection.open do
           @server.connection.post(url(path), data, headers, &block)
+        end
+      end
+
+      def delete(path, headers = {}, &block) # @private
+        @server.connection.open do
+          @server.connection.delete(url(path), headers, &block)
         end
       end
 
