@@ -52,7 +52,7 @@ module RDF::Sesame
     attr_reader :connection
 
     ##
-    # Initializes this server instance.
+    # Initializes this `Server` instance.
     #
     # @param  [RDF::URI]               url
     # @param  [Hash{Symbol => Object}] options
@@ -93,6 +93,22 @@ module RDF::Sesame
     end
 
     alias_method :uri, :url
+
+    ##
+    # Returns the URL of this server.
+    #
+    # @return [RDF::URI]
+    def to_uri
+      url
+    end
+
+    ##
+    # Returns the URL of this server as a string.
+    #
+    # @return [String]
+    def to_s
+      url.to_s
+    end
 
     ##
     # Returns the Sesame server's protocol version.
