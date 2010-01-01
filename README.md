@@ -10,7 +10,7 @@ This is a Sesame 2.0 adapter for [RDF.rb](http://rdf.rubyforge.org/).
 Documentation
 -------------
 
-* <http://rdf.rubyforge.org/>
+* [`RDF::Sesame`](http://rdf.rubyforge.org/RDF/Sesame.html)
 
 Dependencies
 ------------
@@ -46,5 +46,5 @@ Author
 License
 -------
 
-RDF::Sesame is free and unencumbered public domain software. For more
+`RDF::Sesame` is free and unencumbered public domain software. For more
 information, see <http://unlicense.org/> or the accompanying UNLICENSE file.
