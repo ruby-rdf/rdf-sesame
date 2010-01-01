@@ -98,6 +98,22 @@ module RDF::Sesame
 
     alias_method :uri, :url
 
+    ##
+    # Returns the number of RDF statements in this repository.
+    #
+    # @return [Integer] 
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
+    def size
+      get(:size) do |response|
+        case response
+          when Net::HTTPSuccess
+            size = response.body
+            size.to_i rescue 0
+          else 0
+        end
+      end
+    end
+
     protected
 
       ##

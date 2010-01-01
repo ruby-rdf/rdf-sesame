@@ -1,6 +1,6 @@
 module RDF::Sesame
   ##
-  # A Sesame 2.0-compatible HTTP server.
+  # A server endpoint compatible with the Sesame 2.0 HTTP protocol.
   #
   # Instances of this class represent Sesame-compatible servers that contain
   # one or more readable and/or writable RDF {Repository repositories}.
@@ -79,7 +79,7 @@ module RDF::Sesame
     end
 
     ##
-    # Returns the absolute URI for the given server-relative `path`.
+    # Returns the URL for the given server-relative `path`.
     #
     # @example Getting a Sesame server's URL
     #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")

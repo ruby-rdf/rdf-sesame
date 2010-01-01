@@ -54,16 +54,20 @@ describe RDF::Sesame::Repository do
   end
 
   context "when used" do
-    before :each do
-      @url = "#{@url}/repositories/SYSTEM"
-      @db  = RDF::Sesame::Repository.new(@url)
+    it "should support URL construction" do
+      @server.each_repository do |repository|
+        url = "#{@url}/repositories/#{repository.id}"
+        repository.should respond_to(:url, :uri)
+        repository.url.should be_instance_of(RDF::URI)
+        repository.url.to_s.should == url.to_s
+        repository.url(:size).to_s.should == "#{url}/size"
+      end
     end
 
-    it "should support URL construction" do
-      @db.should respond_to(:url, :uri)
-      @db.url.should be_instance_of(RDF::URI)
-      @db.url.to_s.should == @url.to_s
-      @db.url(:size).to_s.should == "#{@url}/size"
+    it "should return the size of the repository" do
+      @server.each_repository do |repository|
+        repository.size.should be_a_kind_of(Numeric)
+      end
     end
   end
 end
