@@ -92,8 +92,10 @@ module RDF::Sesame
     #
     # @param  [String, #to_s] path
     # @return [RDF::URI]
-    def url(path = nil)
-      path ? RDF::URI.new("#{@uri}/#{path}") : @uri # FIXME
+    def url(path = nil, query = {})
+      url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
+      url.query_values = query unless query.nil? || query.empty?
+      url
     end
 
     alias_method :uri, :url
@@ -123,13 +125,35 @@ module RDF::Sesame
     end
 
     ##
+    # Returns `true` if this repository contains the given RDF `statement`.
+    #
+    # @param  [Statement] statement
+    # @return [Boolean]
+    def has_statement?(statement)
+      writer = RDF::NTriples::Writer.new
+      query  = {
+        :subj => writer.format_value(statement.subject),
+        :pred => writer.format_value(statement.predicate),
+        :obj  => writer.format_value(statement.object),
+      }
+      get(:statements, query, 'Accept' => 'text/plain') do |response|
+        case response
+          when Net::HTTPSuccess
+            reader = RDF::NTriples::Reader.new(response.body)
+            reader.include?(statement)
+          else false
+        end
+      end
+    end
+
+    ##
     # Enumerates each RDF statement in the repository.
     #
     # @yield [statement]
     # @yieldparam [Statement]
     # @return [Enumerator]
     def each_statement(&block)
-      get(:statements, 'Accept' => 'text/plain') do |response|
+      get(:statements, {}, 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
@@ -169,9 +193,9 @@ module RDF::Sesame
 
     protected
 
-      def get(path, headers = {}, &block) # @private
+      def get(path, query = {}, headers = {}, &block) # @private
         @server.connection.open do
-          @server.connection.get(url(path), headers, &block)
+          @server.connection.get(url(path, query), headers, &block)
         end
       end
 
