@@ -124,17 +124,29 @@ module RDF::Sesame
 
     protected
 
-      ##
-      # Performs an HTTP GET request for the given Sesame repository `path`.
-      #
-      # @param  [String, #to_s]          path
-      # @param  [Hash{String => String}] headers
-      # @yield  [response]
-      # @yieldparam [Net::HTTPResponse] response
-      # @return [Net::HTTPResponse]
-      def get(path, headers = {}, &block)
+      def insert_statement(statement)
+        data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
+        post(:statements, data, 'Content-Type' => 'text/plain') do |response|
+          case response
+            when Net::HTTPSuccess then true
+            else false
+          end
+        end
+      end
+
+      def delete_statement(statement)
+        # TODO
+      end
+
+      def get(path, headers = {}, &block) # @private
         @server.connection.open do
           @server.connection.get(url(path), headers, &block)
+        end
+      end
+
+      def post(path, data, headers = {}, &block) # @private
+        @server.connection.open do
+          @server.connection.post(url(path), data, headers, &block)
         end
       end
 
