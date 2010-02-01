@@ -6,16 +6,16 @@ module RDF::Sesame
   # servers.
   #
   # @example Opening a Sesame repository (1)
-  #   url    = "http://localhost:8080/openrdf-sesame/repositories/SYSTEM"
-  #   db     = RDF::Sesame::Repository.new(url)
+  #   url = "http://localhost:8080/openrdf-sesame/repositories/SYSTEM"
+  #   repository = RDF::Sesame::Repository.new(url)
   #
   # @example Opening a Sesame repository (2)
   #   server = RDF::Sesame::Server.new("http://localhost:8080/openrdf-sesame")
-  #   db     = RDF::Sesame::Repository.new(:server => server, :id => :SYSTEM)
+  #   repository = RDF::Sesame::Repository.new(:server => server, :id => :SYSTEM)
   #
   # @example Opening a Sesame repository (3)
   #   server = RDF::Sesame::Server.new("http://localhost:8080/openrdf-sesame")
-  #   db     = server.repository(:SYSTEM)
+  #   repository = server.repository(:SYSTEM)
   #
   # @see RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
@@ -170,6 +170,10 @@ module RDF::Sesame
       end
     end
 
+    ##
+    # Inserts an RDF statement into this repository.
+    #
+    # @param  [Statement] statement
     # @return [Boolean]
     def insert_statement(statement)
       data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
@@ -181,6 +185,10 @@ module RDF::Sesame
       end
     end
 
+    ##
+    # Deletes an RDF statement from this repository.
+    #
+    # @param  [Statement] statement
     # @return [Boolean]
     def delete_statement(statement)
       server.delete(url(:statements, statement)) do |response|
