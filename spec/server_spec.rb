@@ -1,4 +1,4 @@
-require 'rdf/sesame'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe RDF::Sesame::Server do
   before :each do
