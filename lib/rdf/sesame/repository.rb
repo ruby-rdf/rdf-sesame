@@ -170,7 +170,7 @@ module RDF::Sesame
     # @yieldparam [RDF::Statement] statement
     # @return [Enumerator]
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def each_statement(&block)
+    def each(&block)
       server.get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
@@ -179,8 +179,6 @@ module RDF::Sesame
         end
       end
     end
-
-    alias_method :each, :each_statement
 
     ##
     # Inserts the given RDF statement into this repository.

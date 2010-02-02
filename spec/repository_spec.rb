@@ -1,4 +1,5 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
   before :each do
@@ -69,5 +70,14 @@ describe RDF::Sesame::Repository do
         repository.size.should be_a_kind_of(Numeric)
       end
     end
+  end
+
+  context "when tested" do
+    before :each do
+      @repository = @server.repository((ENV['SESAME_REPOSITORY'] || :spec).to_sym)
+    end
+
+    # @see lib/rdf/spec/repository.rb
+    it_should_behave_like RDF_Repository
   end
 end
