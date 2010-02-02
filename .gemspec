@@ -9,7 +9,7 @@ GEMSPEC = Gem::Specification.new do |gem|
   gem.homepage           = 'http://rdf.rubyforge.org/'
   gem.license            = 'Public Domain' if gem.respond_to?(:license=)
   gem.summary            = 'Sesame 2.0 adapter for RDF.rb.'
-  gem.description        = 'RDF::Sesame is a Sesame 2.0 adapter for RDF.rb.'
+  gem.description        = 'RDF.rb plugin providing a Sesame 2.0 storage adapter.'
   gem.rubyforge_project  = 'rdf'
 
   gem.authors            = ['Arto Bendiken']
