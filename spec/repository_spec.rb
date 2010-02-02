@@ -75,6 +75,7 @@ describe RDF::Sesame::Repository do
   context "when tested" do
     before :each do
       @repository = @server.repository((ENV['SESAME_REPOSITORY'] || :spec).to_sym)
+      @repository.clear
     end
 
     # @see lib/rdf/spec/repository.rb
