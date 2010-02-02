@@ -92,7 +92,7 @@ module RDF::Sesame
 
       # Preserve only those URI components that we actually require for
       # establishing a connection to the HTTP server in question:
-      @url = RDF::URI.new(Addressable::URI.new(to_hash))
+      @url = RDF::URI.new(to_hash)
 
       @headers   = options.delete(:headers) || {}
       @options   = options

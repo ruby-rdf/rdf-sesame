@@ -20,8 +20,6 @@ module RDF::Sesame
   # @see RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Repository < RDF::Repository
-    include Enumerable
-
     # @return [RDF::URI]
     attr_reader :url
     alias_method :uri, :url
@@ -55,18 +53,19 @@ module RDF::Sesame
       case url_or_options
         when String
           initialize(RDF::URI.new(url_or_options), &block)
+
         when RDF::URI
-          require 'addressable/uri' unless defined?(Addressable)
           require 'pathname' unless defined?(Pathname)
           @uri     = url_or_options
-          @server  = Server.new(RDF::URI.new(Addressable::URI.new({
+          @server  = Server.new(RDF::URI.new({
             :scheme   => @uri.scheme,
             :userinfo => @uri.userinfo,
             :host     => @uri.host,
             :port     => @uri.port,
             :path     => Pathname.new(@uri.path).parent.parent.to_s, # + '../..'
-          })))
+          }))
           @options = {}
+
         when Hash
           raise ArgumentError.new("missing options[:server]") unless url_or_options.has_key?(:server)
           raise ArgumentError.new("missing options[:id]")     unless url_or_options.has_key?(:id)
@@ -75,6 +74,7 @@ module RDF::Sesame
           @id      = @options.delete(:id)
           @uri     = @options.delete(:uri) || server.url("repositories/#{@id}")
           @title   = @options.delete(:title)
+
         else
           raise ArgumentError.new("wrong argument type #{url_or_options.class} (expected String, RDF::URI or Hash)")
       end
@@ -115,11 +115,19 @@ module RDF::Sesame
     alias_method :uri, :url
 
     ##
+    # Returns `true` to indicate that this repository is durable.
+    #
+    # @return [Boolean]
+    def durable?
+      true # FIXME
+    end
+
+    ##
     # Returns `true` if this repository contains no RDF statements.
     #
     # @return [Boolean]
     def empty?
-      size.zero?
+      count.zero?
     end
 
     ##
@@ -127,7 +135,7 @@ module RDF::Sesame
     #
     # @return [Integer] 
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
-    def size
+    def count
       server.get(url(:size)) do |response|
         case response
           when Net::HTTPSuccess
@@ -139,10 +147,11 @@ module RDF::Sesame
     end
 
     ##
-    # Returns `true` if this repository contains the given RDF `statement`.
+    # Returns `true` if this repository contains the given RDF statement.
     #
-    # @param  [Statement] statement
+    # @param  [RDF::Statement] statement
     # @return [Boolean]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
       server.get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
         case response
@@ -155,11 +164,12 @@ module RDF::Sesame
     end
 
     ##
-    # Enumerates each RDF statement in the repository.
+    # Enumerates each RDF statement in this repository.
     #
-    # @yield [statement]
-    # @yieldparam [Statement]
+    # @yield  [statement]
+    # @yieldparam [RDF::Statement] statement
     # @return [Enumerator]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def each_statement(&block)
       server.get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
@@ -170,13 +180,16 @@ module RDF::Sesame
       end
     end
 
+    alias_method :each, :each_statement
+
     ##
-    # Inserts an RDF statement into this repository.
+    # Inserts the given RDF statement into this repository.
     #
-    # @param  [Statement] statement
+    # @param  [RDF::Statement] statement
     # @return [Boolean]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      data = RDF::NTriples::Writer.buffer { |writer| writer << statement }
+      data = RDF::NTriples::Writer.buffer { |writer| writer << statement } # FIXME for RDF.rb 0.1.0
       server.post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
@@ -186,10 +199,11 @@ module RDF::Sesame
     end
 
     ##
-    # Deletes an RDF statement from this repository.
+    # Deletes the given RDF statement from this repository.
     #
-    # @param  [Statement] statement
+    # @param  [RDF::Statement] statement
     # @return [Boolean]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
       server.delete(url(:statements, statement)) do |response|
         case response
@@ -203,6 +217,7 @@ module RDF::Sesame
     # Deletes all RDF statements from this repository.
     #
     # @return [Boolean]
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def clear_statements
       server.delete(url(:statements)) do |response|
         case response
