@@ -7,8 +7,8 @@ module RDF
   # Dependencies
   # ------------
   #
-  # * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.0.9)
-  # * [JSON](http://rubygems.org/gems/json_pure) (>= 1.2.0)
+  # * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.1.0)
+  # * [JSON](http://rubygems.org/gems/json_pure) (>= 1.2.3)
   #
   # Installation
   # ------------
