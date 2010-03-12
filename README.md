@@ -17,14 +17,14 @@ Documentation
 Dependencies
 ------------
 
-* [RDF.rb](http://gemcutter.org/gems/rdf) (>= 0.0.9)
-* [JSON](http://gemcutter.org/gems/json_pure) (>= 1.2.0)
+* [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.0.9)
+* [JSON](http://rubygems.org/gems/json_pure) (>= 1.2.0)
 
 Installation
 ------------
 
 The recommended installation method is via RubyGems. To install the latest
-official release from Gemcutter, do:
+official release, do:
 
     % [sudo] gem install rdf-sesame
 
