@@ -6,3 +6,8 @@ begin
 rescue LoadError => e
 end
 require 'rdf/sesame'
+
+desc "Build the rdf-sesame-#{File.read('VERSION').chomp}.gem file"
+task :build do
+  sh "gem build .gemspec"
+end
