@@ -6,14 +6,14 @@ GEMSPEC = Gem::Specification.new do |gem|
   gem.date               = File.mtime('VERSION').strftime('%Y-%m-%d')
 
   gem.name               = 'rdf-sesame'
-  gem.homepage           = 'http://rdf.rubyforge.org/'
+  gem.homepage           = 'http://rdf.rubyforge.org/sesame/'
   gem.license            = 'Public Domain' if gem.respond_to?(:license=)
   gem.summary            = 'Sesame 2.0 adapter for RDF.rb.'
   gem.description        = 'RDF.rb plugin providing a Sesame 2.0 storage adapter.'
   gem.rubyforge_project  = 'rdf'
 
   gem.authors            = ['Arto Bendiken']
-  gem.email              = 'arto.bendiken@gmail.com'
+  gem.email              = 'public-rdf-ruby@w3.org'
 
   gem.platform           = Gem::Platform::RUBY
   gem.files              = %w(AUTHORS README UNLICENSE VERSION) + Dir.glob('lib/**/*.rb')
@@ -25,12 +25,12 @@ GEMSPEC = Gem::Specification.new do |gem|
   gem.test_files         = %w()
   gem.has_rdoc           = false
 
-  gem.required_ruby_version      = '>= 1.8.2'
+  gem.required_ruby_version      = '>= 1.8.1'
   gem.requirements               = []
-  gem.add_development_dependency 'rdf-spec',  '>= 0.1.0'
+  gem.add_runtime_dependency     'json_pure', '~> 1.4.3'
+  gem.add_runtime_dependency     'rdf',       '~> 0.2.0'
+  gem.add_development_dependency 'yard' ,     '>= 0.5.8'
   gem.add_development_dependency 'rspec',     '>= 1.3.0'
-  gem.add_development_dependency 'yard' ,     '>= 0.5.3'
-  gem.add_runtime_dependency     'rdf',       '>= 0.1.0'
-  gem.add_runtime_dependency     'json_pure', '>= 1.2.3'
+  gem.add_development_dependency 'rdf-spec',  '~> 0.2.0'
   gem.post_install_message       = nil
 end
