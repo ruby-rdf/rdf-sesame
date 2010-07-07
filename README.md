@@ -14,6 +14,9 @@ Documentation
   * {RDF::Sesame::Repository}
   * {RDF::Sesame::Server}
 
+This adapter implements the [`RDF::Repository`][RDF::Repository] interface;
+refer to the relevant RDF.rb API documentation for further usage instructions.
+
 Dependencies
 ------------
 
@@ -23,8 +26,8 @@ Dependencies
 Installation
 ------------
 
-The recommended installation method is via RubyGems. To install the latest
-official release, do:
+The recommended installation method is via [RubyGems](http://rubygems.org/).
+To install the latest official release of the `RDF::Sesame` gem, do:
 
     % [sudo] gem install rdf-sesame
 
@@ -51,6 +54,7 @@ License
 `RDF::Sesame` is free and unencumbered public domain software. For more
 information, see <http://unlicense.org/> or the accompanying UNLICENSE file.
 
-[RDF.rb]:     http://rdf.rubyforge.org/
-[Sesame 2.0]: http://www.openrdf.org/
-[Sesame API]: http://www.openrdf.org/doc/sesame2/system/ch08.html
+[RDF.rb]:          http://rdf.rubyforge.org/
+[RDF::Repository]: http://rdf.rubyforge.org/RDF/Repository.html
+[Sesame 2.0]:      http://www.openrdf.org/
+[Sesame API]:      http://www.openrdf.org/doc/sesame2/system/ch08.html
