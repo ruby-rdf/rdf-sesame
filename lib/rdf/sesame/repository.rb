@@ -190,12 +190,17 @@ module RDF::Sesame
     def each_statement(&block)
       return enum_statement unless block_given?
 
-      # TODO: need to use the TriX parser in order to get statement contexts
-      server.get(url(:statements), 'Accept' => 'text/plain') do |response|
-        case response
-          when Net::HTTPSuccess
-            reader = RDF::NTriples::Reader.new(response.body)
-            reader.each_statement(&block)
+      [nil, *enum_context].uniq.each do |context|
+        ctxt = context ? RDF::NTriples.serialize(context) : 'null'
+        server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |response|
+          case response
+            when Net::HTTPSuccess
+              reader = RDF::NTriples::Reader.new(response.body)
+              reader.each_statement do |statement|
+                statement.context = context
+                block.call(statement)
+              end
+          end
         end
       end
     end
@@ -238,9 +243,9 @@ module RDF::Sesame
     # @see RDF::Mutable#insert
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      query = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
-      data  = RDF::NTriples.serialize(statement)
-      server.post(url(:statements, :context => query), data, 'Content-Type' => 'text/plain') do |response|
+      ctxt = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
+      data = RDF::NTriples.serialize(statement)
+      server.post(url(:statements, :context => ctxt), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
           else false
