@@ -20,7 +20,7 @@ refer to the relevant RDF.rb API documentation for further usage instructions.
 Dependencies
 ------------
 
-* [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.2.0)
+* [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.2.2)
 * [JSON](http://rubygems.org/gems/json_pure) (>= 1.4.3)
 
 Installation
