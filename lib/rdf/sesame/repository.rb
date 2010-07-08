@@ -18,10 +18,11 @@ module RDF::Sesame
   #   repository = server.repository(:SYSTEM)
   #
   # @see RDF::Sesame
+  # @see http://rdf.rubyforge.org/RDF/Repository.html
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Repository < RDF::Repository
     # @return [RDF::URI]
-    attr_reader :url
+    attr_reader  :url
     alias_method :uri, :url
 
     # @return [String]
@@ -67,8 +68,8 @@ module RDF::Sesame
           @options = {}
 
         when Hash
-          raise ArgumentError.new("missing options[:server]") unless url_or_options.has_key?(:server)
-          raise ArgumentError.new("missing options[:id]")     unless url_or_options.has_key?(:id)
+          raise ArgumentError, "missing options[:server]" unless url_or_options.has_key?(:server)
+          raise ArgumentError, "missing options[:id]"     unless url_or_options.has_key?(:id)
           @options = url_or_options.dup
           @server  = @options.delete(:server)
           @id      = @options.delete(:id)
@@ -76,7 +77,7 @@ module RDF::Sesame
           @title   = @options.delete(:title)
 
         else
-          raise ArgumentError.new("wrong argument type #{url_or_options.class} (expected String, RDF::URI or Hash)")
+          raise ArgumentError, "expected String, RDF::URI or Hash, but got #{url_or_options.inspect}"
       end
 
       if block_given?
@@ -119,7 +120,7 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def durable?
-      true # FIXME
+      true # TODO: would need to query the SYSTEM repository for this information
     end
 
     ##
@@ -180,6 +181,8 @@ module RDF::Sesame
       end
     end
 
+  protected
+
     ##
     # Inserts the given RDF statement into this repository.
     #
@@ -187,7 +190,7 @@ module RDF::Sesame
     # @return [Boolean]
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      data = RDF::NTriples::Writer.buffer { |writer| writer << statement } # FIXME for RDF.rb 0.1.0
+      data = RDF::NTriples.serialize(statement)
       server.post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
@@ -224,5 +227,5 @@ module RDF::Sesame
         end
       end
     end
-  end
-end
+  end # class Repository
+end # module RDF::Sesame

@@ -145,7 +145,7 @@ module RDF::Sesame
     #
     # @yield  [repository]
     # @yieldparam [Repository] repository
-    # @return [Enumerable]
+    # @return [Enumerator]
     # @see    #repository
     # @see    #repositories
     def each_repository(&block)
@@ -155,9 +155,9 @@ module RDF::Sesame
     alias_method :each, :each_repository
 
     ##
-    # Returns `true` if 
+    # Returns `true` if this server has a repository identified by `id`.
     #
-    # @param  [id] String
+    # @param  [String] id
     # @return [Boolean]
     def has_repository?(id)
       repositories.has_key?(id.to_s)
@@ -184,20 +184,20 @@ module RDF::Sesame
     # @see    #each_repository
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
-      require 'json' unless defined?(JSON)
+      require 'json' unless defined?(::JSON)
 
       get(url(:repositories), ACCEPT_JSON) do |response|
         case response
           when Net::HTTPSuccess
-            json = JSON.parse(response.body)
+            json = ::JSON.parse(response.body)
             json['results']['bindings'].inject({}) do |repositories, binding|
               repository = Repository.new({
                 :server   => self,
                 :uri      => (uri   = RDF::URI.new(binding['uri']['value'])),
                 :id       => (id    = binding['id']['value']),
                 :title    => (title = binding['title']['value']),
-                :readable => binding['readable']['value'] == 'true',
-                :writable => binding['writable']['value'] == 'true',
+                :readable => binding['readable']['value'].to_s == 'true',
+                :writable => binding['writable']['value'].to_s == 'true',
               })
               repositories.merge({id => repository})
             end
@@ -223,5 +223,5 @@ module RDF::Sesame
         self.connection.delete(path, headers, &block)
       end
     end
-  end
-end
+  end # class Server
+end # module RDF::Sesame

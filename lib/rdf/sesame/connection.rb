@@ -334,7 +334,7 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def put(path, headers = {}, &block)
-      # TODO
+      raise NotImplementedError, "#{self.class}#put" # TODO
     end
 
     ##
@@ -355,5 +355,5 @@ module RDF::Sesame
         end
       end
     end
-  end
-end
+  end # class Connection
+end # module RDF::Sesame
