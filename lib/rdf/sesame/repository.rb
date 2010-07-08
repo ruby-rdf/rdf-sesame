@@ -107,7 +107,7 @@ module RDF::Sesame
               :context => query.has_context? ? writer.format_value(query.context) : 'null',
             }
             url.query_values = query
-          when Hash then query # FIXME
+          when Hash
             url.query_values = query unless query.empty?
         end
       end
@@ -117,62 +117,79 @@ module RDF::Sesame
     alias_method :uri, :url
 
     ##
-    # Returns `true` to indicate that this repository is durable.
-    #
-    # @return [Boolean]
+    # @private
+    # @see RDF::Repository#supports?
+    def supports?(feature)
+      case feature.to_sym
+        when :context then true # statement contexts / named graphs
+        else super
+      end
+    end
+
+    ##
+    # @private
+    # @see RDF::Durable#durable?
     def durable?
       true # TODO: would need to query the SYSTEM repository for this information
     end
 
     ##
-    # Returns `true` if this repository contains no RDF statements.
-    #
-    # @return [Boolean]
+    # @private
+    # @see RDF::Countable#empty?
     def empty?
       count.zero?
     end
 
     ##
-    # Returns the number of RDF statements in this repository.
-    #
-    # @return [Integer] 
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
+    # @private
+    # @see RDF::Countable#count
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
       server.get(url(:size)) do |response|
         case response
           when Net::HTTPSuccess
             size = response.body
             size.to_i rescue 0
-          else 0
+          else -1 # FIXME: raise error
         end
       end
     end
 
     ##
-    # Returns `true` if this repository contains the given RDF statement.
-    #
-    # @param  [RDF::Statement] statement
-    # @return [Boolean]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    # @private
+    # @see RDF::Enumerable#has_triple?
+    def has_triple?(triple)
+      has_statement?(RDF::Statement.from(triple))
+    end
+
+    ##
+    # @private
+    # @see RDF::Enumerable#has_quad?
+    def has_quad?(quad)
+      has_statement?(RDF::Statement.new(quad[0], quad[1], quad[2], :context => quad[3]))
+    end
+
+    ##
+    # @private
+    # @see RDF::Enumerable#has_statement?
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
       server.get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
-            reader = RDF::NTriples::Reader.new(response.body)
-            reader.include?(statement) # FIXME
+            !response.body.empty?
           else false
         end
       end
     end
 
     ##
-    # Enumerates each RDF statement in this repository.
-    #
-    # @yield  [statement]
-    # @yieldparam [RDF::Statement] statement
-    # @return [Enumerator]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def each(&block)
+    # @private
+    # @see RDF::Enumerable#each_statement
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    def each_statement(&block)
+      return enum_statement unless block_given?
+      # TODO: need to use the TriX parser in order to get statement contexts
       server.get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess
@@ -182,14 +199,35 @@ module RDF::Sesame
       end
     end
 
+    alias_method :each, :each_statement
+
+    ##
+    # @private
+    # @see RDF::Enumerable#has_context?
+    def has_context?(value)
+      super # TODO
+    end
+
+    ##
+    # @private
+    # @see RDF::Enumerable#each_context
+    def each_context(&block)
+      super # TODO
+    end
+
   protected
 
     ##
-    # Inserts the given RDF statement into this repository.
-    #
-    # @param  [RDF::Statement] statement
-    # @return [Boolean]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    # @private
+    # @see RDF::Queryable#query
+    def query_pattern(pattern, &block)
+      super # TODO
+    end
+
+    ##
+    # @private
+    # @see RDF::Mutable#insert
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
       query = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
       data  = RDF::NTriples.serialize(statement)
@@ -202,11 +240,9 @@ module RDF::Sesame
     end
 
     ##
-    # Deletes the given RDF statement from this repository.
-    #
-    # @param  [RDF::Statement] statement
-    # @return [Boolean]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    # @private
+    # @see RDF::Mutable#delete
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
       server.delete(url(:statements, statement)) do |response|
         case response
@@ -217,10 +253,9 @@ module RDF::Sesame
     end
 
     ##
-    # Deletes all RDF statements from this repository.
-    #
-    # @return [Boolean]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    # @private
+    # @see RDF::Mutable#clear
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def clear_statements
       server.delete(url(:statements)) do |response|
         case response
