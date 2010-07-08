@@ -4,27 +4,6 @@ module RDF
   ##
   # **`RDF::Sesame`** is a Sesame 2.0 adapter for RDF.rb.
   #
-  # Dependencies
-  # ------------
-  #
-  # * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.1.0)
-  # * [JSON](http://rubygems.org/gems/json_pure) (>= 1.2.3)
-  #
-  # Installation
-  # ------------
-  #
-  # The recommended installation method is via RubyGems. To install the latest
-  # official release, do:
-  #
-  #     % [sudo] gem install rdf-sesame
-  #
-  # Documentation
-  # -------------
-  #
-  # * {RDF::Sesame::Connection}
-  # * {RDF::Sesame::Repository}
-  # * {RDF::Sesame::Server}
-  #
   # @example Requiring the `RDF::Sesame` module
   #   require 'rdf/sesame'
   #
