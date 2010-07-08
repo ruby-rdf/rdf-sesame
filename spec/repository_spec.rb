@@ -3,7 +3,7 @@ require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
   before :each do
-    @url    = RDF::URI.new(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
+    @url    = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
     @server = RDF::Sesame::Server.new(@url)
   end
 
@@ -22,7 +22,7 @@ describe RDF::Sesame::Repository do
     end
 
     it "accepts a URI argument" do
-      url = RDF::URI.new("#{@url}/repositories/SYSTEM")
+      url = RDF::URI("#{@url}/repositories/SYSTEM")
       lambda { RDF::Sesame::Repository.new(url) }.should_not raise_error(ArgumentError)
 
       db = RDF::Sesame::Repository.new(url)

@@ -6,7 +6,7 @@ module RDF::Sesame
   # one or more readable and/or writable RDF {Repository repositories}.
   #
   # @example Connecting to a Sesame server
-  #   url    = RDF::URI.new("http://localhost:8080/openrdf-sesame")
+  #   url    = RDF::URI("http://localhost:8080/openrdf-sesame")
   #   server = RDF::Sesame::Server.new(url)
   #
   # @example Retrieving the server's protocol version

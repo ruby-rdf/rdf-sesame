@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe RDF::Sesame::Server do
   before :each do
-    @url    = RDF::URI.new(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
+    @url    = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
     @server = RDF::Sesame::Server.new(@url)
   end
 

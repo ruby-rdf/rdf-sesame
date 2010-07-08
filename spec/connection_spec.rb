@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe RDF::Sesame::Connection do
   before :each do
-    @url  = RDF::URI.new(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
+    @url  = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
     @conn = RDF::Sesame::Connection.new(@url)
   end
 
@@ -61,11 +61,11 @@ describe RDF::Sesame::Connection do
   it "has a URI representation" do
     @conn.should respond_to(:to_uri)
     @conn.to_uri.should be_a_uri
-    @conn.to_uri.to_s.should == RDF::URI.new(@url.to_hash.merge(:path => '')).to_s
+    @conn.to_uri.to_s.should == RDF::URI(@url.to_hash.merge(:path => '')).to_s
   end
 
   it "has a string representation" do
     @conn.should respond_to(:to_s)
-    @conn.to_s.should == RDF::URI.new(@url.to_hash.merge(:path => '')).to_s
+    @conn.to_s.should == RDF::URI(@url.to_hash.merge(:path => '')).to_s
   end
 end
