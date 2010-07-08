@@ -6,14 +6,14 @@ describe RDF::Sesame::Connection do
     @conn = RDF::Sesame::Connection.new(@url)
   end
 
-  it "should support opening a connection" do
+  it "supports opening a connection" do
     @conn.should respond_to(:open)
     @conn.open?.should be_false
     @conn.open
     @conn.open?.should be_true
   end
 
-  it "should support closing a connection manually" do
+  it "supports closing a connection manually" do
     @conn.should respond_to(:close)
     @conn.open?.should be_false
     @conn.open
@@ -22,7 +22,7 @@ describe RDF::Sesame::Connection do
     @conn.open?.should be_false
   end
 
-  it "should support closing a connection automatically" do
+  it "supports closing a connection automatically" do
     @conn.open?.should be_false
     @conn.open do
       @conn.open?.should be_true
@@ -30,34 +30,42 @@ describe RDF::Sesame::Connection do
     @conn.open?.should be_false
   end
 
-  it "should support HTTP GET requests" do
+  it "supports HTTP GET requests" do
     @conn.should respond_to(:get)
   end
 
-  it "should perform HTTP GET requests" do
+  it "performs HTTP GET requests" do
     response = @conn.get("#{@url.path}/protocol")
     response.should be_a_kind_of(Net::HTTPSuccess)
-    response.body.should == "4"
+    response.body.should == '4'
   end
 
-  it "should support HTTP POST requests" do
+  it "supports HTTP POST requests" do
     @conn.should respond_to(:post)
   end
 
-  it "should support HTTP PUT requests" do
+  it "performs HTTP POST requests"
+
+  it "supports HTTP PUT requests" do
     @conn.should respond_to(:put)
   end
 
-  it "should support HTTP DELETE requests" do
+  it "performs HTTP PUT requests"
+
+  it "supports HTTP DELETE requests" do
     @conn.should respond_to(:delete)
   end
 
-  it "should have a URI representation" do
-    @conn.to_uri.should be_a_kind_of(RDF::URI)
-    @conn.to_uri.to_s.should == "http://localhost:8080"
+  it "performs HTTP DELETE requests"
+
+  it "has a URI representation" do
+    @conn.should respond_to(:to_uri)
+    @conn.to_uri.should be_a_uri
+    @conn.to_uri.to_s.should == RDF::URI.new(@url.to_hash.merge(:path => '')).to_s
   end
 
-  it "should have a string representation" do
-    @conn.to_s.should == "http://localhost:8080"
+  it "has a string representation" do
+    @conn.should respond_to(:to_s)
+    @conn.to_s.should == RDF::URI.new(@url.to_hash.merge(:path => '')).to_s
   end
 end

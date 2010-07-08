@@ -8,12 +8,12 @@ describe RDF::Sesame::Repository do
   end
 
   context "when created" do
-    it "should require exactly one argument" do
+    it "requires exactly one argument" do
       lambda { RDF::Sesame::Repository.new }.should raise_error(ArgumentError)
       lambda { RDF::Sesame::Repository.new(nil, nil) }.should raise_error(ArgumentError)
     end
 
-    it "should accept a string argument" do
+    it "accepts a string argument" do
       url = "#{@url}/repositories/SYSTEM"
       lambda { RDF::Sesame::Repository.new(url) }.should_not raise_error(ArgumentError)
 
@@ -21,7 +21,7 @@ describe RDF::Sesame::Repository do
       db.server.to_uri.to_s.should == @url.to_s
     end
 
-    it "should accept a URI argument" do
+    it "accepts a URI argument" do
       url = RDF::URI.new("#{@url}/repositories/SYSTEM")
       lambda { RDF::Sesame::Repository.new(url) }.should_not raise_error(ArgumentError)
 
@@ -29,7 +29,7 @@ describe RDF::Sesame::Repository do
       db.server.to_uri.to_s.should == @url.to_s
     end
 
-    it "should accept :server and :id" do
+    it "accepts :server and :id" do
       options = {:server => @server, :id => :SYSTEM}
       lambda { RDF::Sesame::Repository.new(options) }.should_not raise_error(ArgumentError)
 
@@ -37,35 +37,35 @@ describe RDF::Sesame::Repository do
       db.server.to_uri.to_s.should == @url.to_s
     end
 
-    it "should reject :server without :id" do
+    it "rejects :server without :id" do
       options = {:server => @server}
       lambda { RDF::Sesame::Repository.new(options) }.should raise_error(ArgumentError)
     end
 
-    it "should reject :id without :server" do
+    it "rejects :id without :server" do
       options = {:id => :SYSTEM}
       lambda { RDF::Sesame::Repository.new(options) }.should raise_error(ArgumentError)
     end
 
-    it "should reject any other argument" do
-      [nil, :SYSTEM, 123, []].each do |value|
+    it "rejects any other argument" do
+      [nil, :SYSTEM, 123, [], {}].each do |value|
         lambda { RDF::Sesame::Repository.new(value) }.should raise_error(ArgumentError)
       end
     end
   end
 
   context "when used" do
-    it "should support URL construction" do
+    it "supports URL construction" do
       @server.each_repository do |repository|
         url = "#{@url}/repositories/#{repository.id}"
         repository.should respond_to(:url, :uri)
-        repository.url.should be_instance_of(RDF::URI)
+        repository.url.should be_a_uri
         repository.url.to_s.should == url.to_s
         repository.url(:size).to_s.should == "#{url}/size"
       end
     end
 
-    it "should return the size of the repository" do
+    it "returns the size of each repository" do
       @server.each_repository do |repository|
         repository.size.should be_a_kind_of(Numeric)
       end
@@ -74,11 +74,15 @@ describe RDF::Sesame::Repository do
 
   context "when tested" do
     before :each do
-      @repository = @server.repository((ENV['SESAME_REPOSITORY'] || :spec).to_sym)
+      @repository = @server.repository((ENV['SESAME_REPOSITORY'] || :test).to_sym)
       @repository.clear
     end
 
-    # @see lib/rdf/spec/repository.rb
+    after :all do
+      @repository.clear
+    end
+
+    # @see lib/rdf/spec/repository.rb in rdf-spec
     it_should_behave_like RDF_Repository
   end
 end
