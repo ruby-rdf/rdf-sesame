@@ -189,6 +189,7 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def each_statement(&block)
       return enum_statement unless block_given?
+
       # TODO: need to use the TriX parser in order to get statement contexts
       server.get(url(:statements), 'Accept' => 'text/plain') do |response|
         case response
@@ -203,16 +204,24 @@ module RDF::Sesame
 
     ##
     # @private
-    # @see RDF::Enumerable#has_context?
-    def has_context?(value)
-      super # TODO
-    end
-
-    ##
-    # @private
     # @see RDF::Enumerable#each_context
     def each_context(&block)
-      super # TODO
+      return enum_context unless block_given?
+
+      require 'json' unless defined?(::JSON)
+      server.get(url(:contexts), Server::ACCEPT_JSON) do |response|
+        case response
+          when Net::HTTPSuccess
+            json = ::JSON.parse(response.body)
+            json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
+              context = case context_id['type'].to_s.to_sym
+                when :bnode then RDF::Node.new(context_id['value'])
+                when :uri   then RDF::URI.new(context_id['value'])
+              end
+              block.call(context) if context
+            end
+        end
+      end
     end
 
   protected
