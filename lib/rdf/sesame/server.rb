@@ -33,7 +33,6 @@ module RDF::Sesame
   #   server.repository(:SYSTEM)      #=> RDF::Sesame::Repository(SYSTEM)
   #   server[:SYSTEM]                 #=> RDF::Sesame::Repository(SYSTEM)
   #
-  # @see RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   class Server
     include Enumerable

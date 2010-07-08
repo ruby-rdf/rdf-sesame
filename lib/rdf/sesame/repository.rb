@@ -5,6 +5,12 @@ module RDF::Sesame
   # Instances of this class represent RDF repositories on Sesame-compatible
   # servers.
   #
+  # This class implements the [`RDF::Repository`][RDF::Repository]
+  # interface; refer to the relevant RDF.rb API documentation for further
+  # usage instructions.
+  #
+  # [RDF::Repository]: http://rdf.rubyforge.org/RDF/Repository.html
+  #
   # @example Opening a Sesame repository (1)
   #   url = "http://localhost:8080/openrdf-sesame/repositories/SYSTEM"
   #   repository = RDF::Sesame::Repository.new(url)
@@ -17,9 +23,8 @@ module RDF::Sesame
   #   server = RDF::Sesame::Server.new("http://localhost:8080/openrdf-sesame")
   #   repository = server.repository(:SYSTEM)
   #
-  # @see RDF::Sesame
-  # @see http://rdf.rubyforge.org/RDF/Repository.html
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
+  # @see http://rdf.rubyforge.org/RDF/Repository.html
   class Repository < RDF::Repository
     # @return [RDF::URI]
     attr_reader  :url

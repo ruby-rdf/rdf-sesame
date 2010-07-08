@@ -33,14 +33,12 @@ module RDF::Sesame
   #   end
   #
   # @example Performing an HTTP GET on a Sesame server
-  #   url = RDF::URI("http://localhost:8080/openrdf-sesame")
   #   RDF::Sesame::Connection.open(url) do |conn|
   #     conn.get("/openrdf-sesame/protocol") do |response|
   #       version = response.body.to_i
   #     end
   #   end
   #
-  # @see RDF::Sesame
   # @see http://ruby-doc.org/core/classes/Net/HTTP.html
   class Connection
     # @return [RDF::URI]

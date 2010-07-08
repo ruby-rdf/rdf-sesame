@@ -11,8 +11,8 @@ Documentation
 
 * {RDF::Sesame}
   * {RDF::Sesame::Connection}
-  * {RDF::Sesame::Repository}
   * {RDF::Sesame::Server}
+  * {RDF::Sesame::Repository}
 
 This adapter implements the [`RDF::Repository`][RDF::Repository] interface;
 refer to the relevant RDF.rb API documentation for further usage instructions.
