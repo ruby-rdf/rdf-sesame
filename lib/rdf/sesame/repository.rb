@@ -101,12 +101,13 @@ module RDF::Sesame
           when RDF::Statement
             writer = RDF::NTriples::Writer.new
             query  = {
-              :subj => writer.format_value(query.subject),
-              :pred => writer.format_value(query.predicate),
-              :obj  => writer.format_value(query.object),
+              :subj    => writer.format_value(query.subject),
+              :pred    => writer.format_value(query.predicate),
+              :obj     => writer.format_value(query.object),
+              :context => query.has_context? ? writer.format_value(query.context) : 'null',
             }
             url.query_values = query
-          when Hash then query
+          when Hash then query # FIXME
             url.query_values = query unless query.empty?
         end
       end
@@ -158,7 +159,7 @@ module RDF::Sesame
         case response
           when Net::HTTPSuccess
             reader = RDF::NTriples::Reader.new(response.body)
-            reader.include?(statement)
+            reader.include?(statement) # FIXME
           else false
         end
       end
@@ -190,8 +191,9 @@ module RDF::Sesame
     # @return [Boolean]
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      data = RDF::NTriples.serialize(statement)
-      server.post(url(:statements), data, 'Content-Type' => 'text/plain') do |response|
+      query = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
+      data  = RDF::NTriples.serialize(statement)
+      server.post(url(:statements, :context => query), data, 'Content-Type' => 'text/plain') do |response|
         case response
           when Net::HTTPSuccess then true
           else false
