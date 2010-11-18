@@ -47,7 +47,7 @@ Dependencies
 ------------
 
 * [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.3.0)
-* [JSON](http://rubygems.org/gems/json_pure) (>= 1.4.3)
+* [JSON](http://rubygems.org/gems/json_pure) (>= 1.4.2)
 
 Installation
 ------------
