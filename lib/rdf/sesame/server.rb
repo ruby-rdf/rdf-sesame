@@ -1,3 +1,5 @@
+require "rexml/document"
+
 module RDF::Sesame
   ##
   # A server endpoint compatible with the Sesame 2.0 HTTP protocol.
@@ -41,6 +43,8 @@ module RDF::Sesame
     ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}
     ACCEPT_BOOL = {'Accept' => 'text/boolean'}
 
+		ACCEPTS = {'Accept' => ACCEPT_JSON['Accept'] +", "+ACCEPT_XML['Accept']}
+
     # @return [RDF::URI]
     attr_reader :url
 
@@ -65,9 +69,12 @@ module RDF::Sesame
         else Addressable::URI.parse(url.to_s)
       end
       @url = RDF::URI.new(@url)
-
-      @connection = options.delete(:connection) || Connection.new(@url)
-      @options    = options
+		
+			@proxy_host = options.delete(:proxy_host) || nil
+      @proxy_port = options.delete(:proxy_port) || nil
+      @connection = options.delete(:connection) || Connection.new(@url , {:proxy_host => @proxy_host, :proxy_port => @proxy_port})
+			
+			@options    = options
 
       if block_given?
         case block.arity
@@ -185,21 +192,38 @@ module RDF::Sesame
     def repositories
       require 'json' unless defined?(::JSON)
 
-      get(url(:repositories), ACCEPT_JSON) do |response|
+      get(url(:repositories),ACCEPTS) do |response|
         case response
           when Net::HTTPSuccess
-            json = ::JSON.parse(response.body)
-            json['results']['bindings'].inject({}) do |repositories, binding|
-              repository = Repository.new({
-                :server   => self,
-                :uri      => (uri   = RDF::URI.new(binding['uri']['value'])),
-                :id       => (id    = binding['id']['value']),
-                :title    => (title = binding['title']['value']),
-                :readable => binding['readable']['value'].to_s == 'true',
-                :writable => binding['writable']['value'].to_s == 'true',
-              })
-              repositories.merge({id => repository})
-            end
+						repositories = {}
+						if(response['content-type'][0, ACCEPT_XML['Accept'].length] == ACCEPT_XML['Accept'])
+							doc = REXML::Document.new(response.body)
+						 	doc.elements.each("sparql/results/result") do |result|
+								repository = Repository.new({
+									:server 	=> self,
+									:uri			=> (uri = RDF::URI.new(result.elements["binding[@name='uri']/literal"].text)),
+									:id				=> (id =	result.elements["binding[@name='id']/literal"].text),
+									:title		=> (title = result.elements["binding[@name='title']/literal"].text),
+									:readable	=> result.elements["binding[@name='readable']/literal"].text == 'true',
+									:writable	=> result.elements["binding[@name='writable']/literal"].text == 'true'
+								})
+								repositories[repository.id] = repository
+							end 
+						else
+        	    json = ::JSON.parse(response.body)
+          	  json['results']['bindings'].inject(repositories) do |repositories, binding|
+            	  repository = Repository.new({
+              	  :server   => self,
+                	:uri      => (uri   = RDF::URI.new(binding['uri']['value'])),
+           	     	:id       => (id    = binding['id']['value']),
+            	    :title    => (title = binding['title']['value']),
+              	  :readable => binding['readable']['value'].to_s == 'true',
+                	:writable => binding['writable']['value'].to_s == 'true',
+              	})
+              	repositories.merge({id => repository})
+            	end
+						end
+					repositories
           else [] # FIXME
         end
       end

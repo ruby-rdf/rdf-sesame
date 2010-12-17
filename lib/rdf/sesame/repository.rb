@@ -100,7 +100,7 @@ module RDF::Sesame
     # @param  [Hash, RDF::Statement] query
     # @return [RDF::URI]
     def url(path = nil, query = {})
-      url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
+		  url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
       unless query.nil?
         case query
           when RDF::Statement
@@ -197,7 +197,7 @@ module RDF::Sesame
 
       [nil, *enum_context].uniq.each do |context|
         ctxt = context ? RDF::NTriples.serialize(context) : 'null'
-        server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |response|
+				server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |response|
           case response
             when Net::HTTPSuccess
               reader = RDF::NTriples::Reader.new(response.body)
