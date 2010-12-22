@@ -1,4 +1,5 @@
-require "rexml/document"
+require 'rexml/document'
+require 'base64'
 
 module RDF::Sesame
   ##
@@ -69,10 +70,18 @@ module RDF::Sesame
         else Addressable::URI.parse(url.to_s)
       end
       @url = RDF::URI.new(@url)
-		
+			
+			user = options.delete(:user) || nil
+			pass = options.delete(:pass) || nill
+			authHeader = {}
+			if (!user.nil? && !pass.nil?) 
+				authHeader =  {'Authorization' => 'Basic ' + Base64.encode64(user +':'+pass)}
+			end
+
 			@proxy_host = options.delete(:proxy_host) || nil
-      @proxy_port = options.delete(:proxy_port) || nil
-      @connection = options.delete(:connection) || Connection.new(@url , {:proxy_host => @proxy_host, :proxy_port => @proxy_port})
+      @proxy_port = options.delete(:proxy_port) || nil 
+		 
+			@connection = options.delete(:connection) || Connection.new(@url , {:headers =>authHeader, :proxy_host => @proxy_host, :proxy_port => @proxy_port})
 			
 			@options    = options
 
