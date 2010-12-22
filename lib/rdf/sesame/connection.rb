@@ -44,11 +44,11 @@ module RDF::Sesame
     # @return [RDF::URI]
     attr_reader :url
 
-		# @return [String]
-		attr_reader :proxy_host 
+    # @return [String]
+    attr_reader :proxy_host 
 
-		# @return [Number]
-		attr_reader :proxy_port 	
+    # @return [Number]
+    attr_reader :proxy_port   
 
     # @return [Hash{Symbol => Object}]
     attr_reader :options
@@ -99,8 +99,8 @@ module RDF::Sesame
       # Preserve only those URI components that we actually require for
       # establishing a connection to the HTTP server in question:
       @url = RDF::URI.new(to_hash)
-	
-  		@proxy_host = options.delete(:proxy_host) || nil
+  
+      @proxy_host = options.delete(:proxy_host) || nil
       @proxy_port = options.delete(:proxy_port) || nil
       @headers   = options.delete(:headers) || {}
       @options   = options
@@ -301,7 +301,7 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def get(path, headers = {}, &block)
-			Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
         response = http.get(path.path.to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
@@ -321,8 +321,8 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def post(path, data, headers = {}, &block)
-		 Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-			 	response = http.post(path.path.to_s, data.to_s, @headers.merge(headers))
+     Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
+        response = http.post(path.path.to_s, data.to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
         else
@@ -352,7 +352,7 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def delete(path, headers = {}, &block)
-			Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
         response = http.delete(path.path.to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
