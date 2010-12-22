@@ -12,6 +12,12 @@ module RDF::Sesame
   #   url    = RDF::URI("http://localhost:8080/openrdf-sesame")
   #   server = RDF::Sesame::Server.new(url)
   #
+  #	@example Connecting to a Sesame server using Basic Auth & local proxy
+  # 	url    = RDF::URI("http://host:port")
+	#		server = RDF::Sesame::Server.new(url, {:user=> 'username', :pass => 'password', 
+	#				:proxy_host => 'localhost', :proxy_port => 8888})
+	#		repo = server.repositories['repositoryname']
+  #
   # @example Retrieving the server's protocol version
   #   server.protocol                 #=> 4
   #
