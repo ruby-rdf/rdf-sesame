@@ -78,7 +78,7 @@ module RDF::Sesame
       @url = RDF::URI.new(@url)
       
       user = options.delete(:user) || nil
-      pass = options.delete(:pass) || nill
+      pass = options.delete(:pass) || nil
       authHeader = {}
       if (!user.nil? && !pass.nil?) 
         authHeader =  {'Authorization' => 'Basic ' + Base64.encode64(user +':'+pass)}
