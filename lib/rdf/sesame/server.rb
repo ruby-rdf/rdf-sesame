@@ -1,6 +1,3 @@
-require 'rexml/document'
-require 'base64'
-
 module RDF::Sesame
   ##
   # A server endpoint compatible with the Sesame 2.0 HTTP protocol.
@@ -71,6 +68,7 @@ module RDF::Sesame
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
       require 'addressable/uri' unless defined?(Addressable)
+      require 'base64' unless defined?(Base64)
       @url = case url
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
@@ -206,6 +204,7 @@ module RDF::Sesame
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
       require 'json' unless defined?(::JSON)
+      require 'rexml/document' unless defined?(::REXML)
 
       get(url(:repositories),ACCEPTS) do |response|
         case response
