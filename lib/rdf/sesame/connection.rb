@@ -302,7 +302,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def get(path, headers = {}, &block)
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.get(path.path.to_s, @headers.merge(headers))
+        response = http.get(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
         else
@@ -322,7 +322,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def post(path, data, headers = {}, &block)
      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.post(path.path.to_s, data.to_s, @headers.merge(headers))
+        response = http.post(path.omit(:scheme, :host, :port).to_s, data.to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
         else
@@ -353,7 +353,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def delete(path, headers = {}, &block)
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.delete(path.path.to_s, @headers.merge(headers))
+        response = http.delete(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
         if block_given?
           block.call(response)
         else
