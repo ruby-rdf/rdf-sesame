@@ -239,8 +239,42 @@ module RDF::Sesame
     ##
     # @private
     # @see RDF::Queryable#query
-    def query_pattern(pattern, &block)
-      super # TODO
+    def query_pattern(pattern, &block) 
+
+      writer = RDF::NTriples::Writer.new
+      #valid url params: subj, pred,obj,context
+      query = {}
+       #Clean up and make nice later 
+      if (!pattern.subject.nil?)
+        query[:subj] = writer.format_value(pattern.subject)
+      end
+
+      if (!pattern.predicate.nil?)
+        query[:pred] = writer.format_value(pattern.predicate)
+      end
+
+      if (!pattern.object.nil?)
+        query[:obj] = writer.format_value(pattern.object)
+      end
+
+      if (!pattern.context.nil?)
+        query[:context] = writer.format_value(pattern.context)
+      end
+
+      uri = url(:statements, query)
+     # puts "QUERY PATTERN: #{pattern } \nURI: #{uri}"
+    
+      server.get (uri) do |response|
+       case response
+            when Net::HTTPSuccess
+              reader = RDF::NTriples::Reader.new(response.body)
+              reader.each_statement do |statement|
+                #puts "\t\t#{statement.inspect}" 
+                #statement.context = context
+                block.call(statement)
+              end
+          end
+      end
     end
 
     ##
@@ -262,7 +296,7 @@ module RDF::Sesame
     # @private
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def delete_statement(statement)
+    def delete_statement(statement)  
       server.delete(url(:statements, statement)) do |response|
         case response
           when Net::HTTPSuccess then true
