@@ -255,6 +255,12 @@ module RDF::Sesame
       end
     end
 
+    def put (path, data, headers = {}, &block) # @private
+      self.connection.open do
+        self.connection.put(path, data, headers, &block)
+      end
+    end
+
     def delete(path, headers = {}, &block) # @private
       self.connection.open do
         self.connection.delete(path, headers, &block)
