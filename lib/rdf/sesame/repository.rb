@@ -99,7 +99,7 @@ module RDF::Sesame
     # @param  [String, #to_s]        path
     # @param  [Hash, RDF::Statement] query
     # @return [RDF::URI]
-    def url(path = nil, query = {})
+    def url(path = nil, query = {}) 
 		  url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
       unless query.nil?
         case query
@@ -110,7 +110,7 @@ module RDF::Sesame
               :pred    => writer.format_value(query.predicate),
               :obj     => writer.format_value(query.object),
               :context => query.has_context? ? writer.format_value(query.context) : 'null',
-            }
+            } 
             url.query_values = query
           when Hash
             url.query_values = query unless query.empty?
@@ -246,7 +246,14 @@ module RDF::Sesame
       query = {}
        #Clean up and make nice later 
       if (!pattern.subject.nil?)
-        query[:subj] = writer.format_value(pattern.subject)
+        subj = ""
+        if (pattern.subject.instance_of? RDF::Node)
+          subj = writer.format_node (pattern.subject)
+          puts "NODE: #{subj}"
+        else
+          subj = writer.format_value(pattern.subject)
+        end
+        query[:subj] = subj
       end
 
       if (!pattern.predicate.nil?)
@@ -260,7 +267,6 @@ module RDF::Sesame
       if (!pattern.context.nil?)
         query[:context] = writer.format_value(pattern.context)
       end
-
       uri = url(:statements, query)
      # puts "QUERY PATTERN: #{pattern } \nURI: #{uri}"
     
