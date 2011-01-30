@@ -339,8 +339,18 @@ module RDF::Sesame
     # @yield  [response]
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
-    def put(path, headers = {}, &block)
-      raise NotImplementedError, "#{self.class}#put" # TODO
+    def put(path, data, headers = {}, &block) 
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
+        request = Net::HTTP::Put.new(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
+        request.body = data.to_s     
+        http.request(request) do |response|
+          if block_given?
+            block.call(response)
+          else
+            response
+          end
+        end
+      end
     end
 
     ##
