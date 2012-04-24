@@ -38,6 +38,12 @@ module RDF::Sesame
 
     # @return [Server]
     attr_reader :server
+    
+    # @return [String]
+    attr_reader :readable
+    
+    # @return [String]
+    attr_reader :writeble
 
     ##
     # Initializes this `Repository` instance.
@@ -80,6 +86,8 @@ module RDF::Sesame
           @id      = @options.delete(:id)
           @uri     = @options.delete(:uri) || server.url("repositories/#{@id}")
           @title   = @options.delete(:title)
+          @readable   = @options.delete(:readable)
+          @writable   = @options.delete(:writable)
 
         else
           raise ArgumentError, "expected String, RDF::URI or Hash, but got #{url_or_options.inspect}"

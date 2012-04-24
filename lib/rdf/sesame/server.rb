@@ -47,7 +47,7 @@ module RDF::Sesame
     ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}
     ACCEPT_BOOL = {'Accept' => 'text/boolean'}
 
-    ACCEPTS = {'Accept' => ACCEPT_JSON['Accept'] +", "+ACCEPT_XML['Accept']}
+    ACCEPTS = {'Accept-Charset' => 'utf-8', 'Accept' => ACCEPT_JSON['Accept'] + ", " + ACCEPT_XML['Accept']}
 
     # @return [RDF::URI]
     attr_reader :url
@@ -68,7 +68,7 @@ module RDF::Sesame
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
       require 'addressable/uri' unless defined?(Addressable)
-      require 'base64' unless defined?(Base64)
+
       @url = case url
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
@@ -77,15 +77,12 @@ module RDF::Sesame
       
       user = options.delete(:user) || nil
       pass = options.delete(:pass) || nil
-      authHeader = {}
-      if (!user.nil? && !pass.nil?) 
-        authHeader =  {'Authorization' => 'Basic ' + Base64.encode64(user +':'+pass)}
-      end
+      ssl_port = options.delete(:ssl_port) || nil
 
       @proxy_host = options.delete(:proxy_host) || nil
       @proxy_port = options.delete(:proxy_port) || nil 
      
-      @connection = options.delete(:connection) || Connection.new(@url , {:headers =>authHeader, :proxy_host => @proxy_host, :proxy_port => @proxy_port})
+      @connection = options.delete(:connection) || Connection.new(@url , {:ssl_port => ssl_port, :user => user, :pass => pass, :headers => {}, :proxy_host => @proxy_host, :proxy_port => @proxy_port})
       
       @options    = options
 
@@ -203,10 +200,10 @@ module RDF::Sesame
     # @see    #each_repository
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
-      require 'json' unless defined?(::JSON)
-      require 'rexml/document' unless defined?(::REXML)
+      require 'json' #unless defined?(::JSON)
+      require 'rexml/document' #unless defined?(::REXML)
 
-      get(url(:repositories),ACCEPTS) do |response|
+      get(url(:repositories), ACCEPTS) do |response|
         case response
           when Net::HTTPSuccess
             repositories = {}
@@ -215,14 +212,14 @@ module RDF::Sesame
               doc.elements.each("sparql/results/result") do |result|
                 repository = Repository.new({
                   :server   => self,
-                  :uri      => (uri = RDF::URI.new(result.elements["binding[@name='uri']/literal"].text)),
+                  :uri      => (uri = RDF::URI.new(result.elements["binding[@name='uri']/uri"].text)),
                   :id       => (id =  result.elements["binding[@name='id']/literal"].text),
                   :title    => (title = result.elements["binding[@name='title']/literal"].text),
                   :readable => result.elements["binding[@name='readable']/literal"].text == 'true',
                   :writable => result.elements["binding[@name='writable']/literal"].text == 'true'
                 })
                 repositories[repository.id] = repository
-              end 
+              end
             else
               json = ::JSON.parse(response.body)
               json['results']['bindings'].inject(repositories) do |repositories, binding|
@@ -237,7 +234,7 @@ module RDF::Sesame
                 repositories.merge({id => repository})
               end
             end
-          repositories
+            repositories
           else [] # FIXME
         end
       end

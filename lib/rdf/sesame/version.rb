@@ -1,7 +1,7 @@
 module RDF; module Sesame
   module VERSION
     MAJOR = 0
-    MINOR = 2
+    MINOR = 4
     TINY  = 0
     EXTRA = nil
 

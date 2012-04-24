@@ -43,7 +43,15 @@ module RDF::Sesame
   class Connection
     # @return [RDF::URI]
     attr_reader :url
+    
+    # @return [String]
+    attr_reader :ssl_port
 
+    # @return [String]
+    attr_reader :user 
+    # @return [String]
+    attr_reader :pass 
+    
     # @return [String]
     attr_reader :proxy_host 
 
@@ -99,6 +107,10 @@ module RDF::Sesame
       # Preserve only those URI components that we actually require for
       # establishing a connection to the HTTP server in question:
       @url = RDF::URI.new(to_hash)
+      
+      @ssl_port = options.delete(:ssl_port) || nil
+      @user = options.delete(:user) || nil
+      @pass = options.delete(:pass) || nil
   
       @proxy_host = options.delete(:proxy_host) || nil
       @proxy_port = options.delete(:proxy_port) || nil
@@ -113,7 +125,7 @@ module RDF::Sesame
         end
       end
     end
-
+    
     ##
     # Returns `true` unless this is an HTTPS connection.
     #
@@ -212,7 +224,7 @@ module RDF::Sesame
     #
     # @return [Integer]
     def port
-      url.port
+      ssl_port.nil? ? url.port : ssl_port
     end
 
     ##
@@ -301,8 +313,10 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def get(path, headers = {}, &block)
-      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.get(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
+        request = Net::HTTP::Get.new(path.to_s, @headers.merge(headers))
+        request.basic_auth @user, @pass
+        response = http.request(request)
         if block_given?
           block.call(response)
         else
@@ -321,8 +335,11 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def post(path, data, headers = {}, &block)
-     Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.post(path.omit(:scheme, :host, :port).to_s, data.to_s, @headers.merge(headers))
+     Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
+        request = Net::HTTP::Post.new(path.to_s, @headers.merge(headers))
+        request.set_form_data(data.to_s, ';')
+        request.basic_auth @user, @pass
+        response = http.request(request)
         if block_given?
           block.call(response)
         else
@@ -340,9 +357,11 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def put(path, data, headers = {}, &block) 
-      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        request = Net::HTTP::Put.new(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
+        request = Net::HTTP::Put.new(path.to_s, @headers.merge(headers))
         request.body = data.to_s     
+        request.basic_auth @user, @pass
+        response = http.request(request)
         http.request(request) do |response|
           if block_given?
             block.call(response)
@@ -362,8 +381,10 @@ module RDF::Sesame
     # @yieldparam [Net::HTTPResponse] response
     # @return [Net::HTTPResponse]
     def delete(path, headers = {}, &block)
-      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port) do |http|
-        response = http.delete(path.omit(:scheme, :host, :port).to_s, @headers.merge(headers))
+      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
+        request = Net::HTTP::Delete.new(path.to_s, @headers.merge(headers))
+        request.basic_auth @user, @pass
+        response = http.request(request)
         if block_given?
           block.call(response)
         else
