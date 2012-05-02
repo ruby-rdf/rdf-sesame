@@ -235,7 +235,7 @@ module RDF::Sesame
               end
             end
             repositories
-          else [] # FIXME
+          else {} # FIXME
         end
       end
     end

@@ -48,7 +48,8 @@ module RDF::Sesame
     attr_reader :ssl_port
 
     # @return [String]
-    attr_reader :user 
+    attr_reader :user
+    
     # @return [String]
     attr_reader :pass 
     
@@ -173,7 +174,7 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def user?
-      !url.user.nil?
+      !user.nil?
     end
 
     ##
@@ -224,7 +225,7 @@ module RDF::Sesame
     #
     # @return [Integer]
     def port
-      ssl_port.nil? ? url.port : ssl_port
+      @ssl_port.nil? ? url.port : @ssl_port
     end
 
     ##
@@ -315,7 +316,7 @@ module RDF::Sesame
     def get(path, headers = {}, &block)
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
         request = Net::HTTP::Get.new(path.to_s, @headers.merge(headers))
-        request.basic_auth @user, @pass
+        request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         if block_given?
           block.call(response)
@@ -338,7 +339,7 @@ module RDF::Sesame
      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
         request = Net::HTTP::Post.new(path.to_s, @headers.merge(headers))
         request.set_form_data(data.to_s, ';')
-        request.basic_auth @user, @pass
+        request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         if block_given?
           block.call(response)
@@ -360,7 +361,7 @@ module RDF::Sesame
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
         request = Net::HTTP::Put.new(path.to_s, @headers.merge(headers))
         request.body = data.to_s     
-        request.basic_auth @user, @pass
+        request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         http.request(request) do |response|
           if block_given?
@@ -383,7 +384,7 @@ module RDF::Sesame
     def delete(path, headers = {}, &block)
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
         request = Net::HTTP::Delete.new(path.to_s, @headers.merge(headers))
-        request.basic_auth @user, @pass
+        request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         if block_given?
           block.call(response)
