@@ -43,10 +43,22 @@ module RDF::Sesame
   class Server
     include Enumerable
 
-    ACCEPT_JSON = {'Accept' => 'application/sparql-results+json'}
-    ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}
-    ACCEPT_BOOL = {'Accept' => 'text/boolean'}
-
+    ACCEPT_JSON = {'Accept' => 'application/sparql-results+json'}.freeze
+    ACCEPT_NTRIPLES = {'Accept' => 'text/plain'}.freeze
+    ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}.freeze
+    ACCEPT_BOOL = {'Accept' => 'text/boolean'}.freeze
+    ACCEPT_XML_PURE =  {'Accept' => 'application/rdf+xml' }.freeze
+    ACCEPT_TURTLE =  {'Accept' => 'application/x-turtle'}.freeze
+    ACCEPT_N3 =  {'Accept' => 'text/rdf+n3'}.freeze
+    ACCEPT_TRIX =  {'Accept' => 'application/trix'}.freeze
+    ACCEPT_TRIG =  {'Accept' => 'application/x-trig'}.freeze
+    ACCEPT_BINARY =  {'Accept' => 'application/x-binary-rdf'}.freeze
+    ACCEPT_BINARY_TABLE = {'Accept' => 'application/x-binary-rdf-results-table'}.freeze
+    
+    RESULT_BOOL = 'text/boolean'.freeze
+    RESULT_JSON = 'application/sparql-results+json'.freeze
+    RESULT_XML = 'application/sparql-results+xml'.freeze
+    
     ACCEPTS = {'Accept-Charset' => 'utf-8', 'Accept' => ACCEPT_JSON['Accept'] + ", " + ACCEPT_XML['Accept']}
 
     # @return [RDF::URI]
@@ -200,8 +212,8 @@ module RDF::Sesame
     # @see    #each_repository
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
-      require 'json' #unless defined?(::JSON)
-      require 'rexml/document' #unless defined?(::REXML)
+      require 'json' unless defined?(::JSON)
+      require 'rexml/document' unless defined?(::REXML::Document)
 
       get(url(:repositories), ACCEPTS) do |response|
         case response
