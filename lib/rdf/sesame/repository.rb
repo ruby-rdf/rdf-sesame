@@ -117,13 +117,13 @@ module RDF::Sesame
         case query
           when RDF::Statement
             writer = RDF::NTriples::Writer.new
-            query  = {
+            q  = {
               :subj    => writer.format_value(query.subject),
               :pred    => writer.format_value(query.predicate),
-              :obj     => writer.format_value(query.object),
-              :context => query.has_context? ? writer.format_value(query.context) : 'null',
+              :obj     => writer.format_value(query.object)
             }
-            url.query_values = query
+            q.merge!(:context => writer.format_value(query.context)) if query.has_context?
+            url.query_values = q
           when Hash
             url.query_values = query unless query.empty?
         end
@@ -231,8 +231,9 @@ module RDF::Sesame
       return enum_statement unless block_given?
 
       [nil, *enum_context].uniq.each do |context|
-        ctxt = context ? RDF::NTriples.serialize(context) : 'null'
-        server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |resp|
+        query = {}
+        query.merge!(:context => RDF::NTriples.serialize(context)) if context
+        server.get(url(:statements, query), 'Accept' => 'text/plain') do |resp|
           reader = RDF::NTriples::Reader.new(response(resp).body)
           reader.each_statement do |statement|
             statement.context = context
@@ -295,9 +296,8 @@ module RDF::Sesame
     # @see RDF::Queryable#query
     def query_pattern(pattern)
       writer = RDF::NTriples::Writer.new
-      query = {
-        :context => pattern.has_context? ? writer.format_value(pattern.context) : 'null',
-      }
+      query = {}
+      query.merge!(:context => writer.format_value(pattern.context)) if pattern.has_context?
       query.merge!(:subj => writer.format_value(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
       query.merge!(:pred => writer.format_value(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
       query.merge!(:obj => writer.format_value(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
@@ -315,9 +315,10 @@ module RDF::Sesame
     # @see RDF::Mutable#insert
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      ctxt = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
+      query = {}
+      query.merge!(:context => RDF::NTriples.serialize(statement.context)) if statement.has_context?
       data = RDF::NTriples.serialize(statement)
-      server.post(url(:statements, :context => ctxt), data, 'Content-Type' => 'text/plain') do |resp|
+      server.post(url(:statements, query), data, 'Content-Type' => 'text/plain') do |resp|
         case response(resp).message
           when 'OK'
             true
