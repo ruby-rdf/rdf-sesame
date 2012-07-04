@@ -76,10 +76,6 @@ describe RDF::Sesame::Repository do
       @repository.clear
     end
 
-    after :each do
-      @repository.clear
-    end
-
     # @see lib/rdf/spec/repository.rb in rdf-spec
     it_should_behave_like RDF_Repository
   end
