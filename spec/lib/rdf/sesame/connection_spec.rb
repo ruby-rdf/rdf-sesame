@@ -37,7 +37,7 @@ describe RDF::Sesame::Connection do
   it "performs HTTP GET requests" do
     response = @conn.get("#{@url.path}/protocol")
     response.should be_a_kind_of(Net::HTTPSuccess)
-    response.body.should == '4'
+    response.body.should be_a String
   end
 
   it "supports HTTP POST requests" do
