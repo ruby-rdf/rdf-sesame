@@ -87,7 +87,7 @@ module RDF::Sesame
 
       if block_given?
         case block.arity
-          when 1 then block.call(self)
+          when 1 then yield self
           else instance_eval(&block)
         end
       end
@@ -192,7 +192,7 @@ module RDF::Sesame
     # @private
     # @see RDF::Enumerable#each_statement
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def each_statement(&block)
+    def each_statement
       return enum_statement unless block_given?
 
       [nil, *enum_context].uniq.each do |context|
@@ -203,7 +203,7 @@ module RDF::Sesame
               reader = RDF::NTriples::Reader.new(response.body)
               reader.each_statement do |statement|
                 statement.context = context
-                block.call(statement)
+                yield statement
               end
           end
         end
@@ -215,7 +215,7 @@ module RDF::Sesame
     ##
     # @private
     # @see RDF::Enumerable#each_context
-    def each_context(&block)
+    def each_context
       return enum_context unless block_given?
 
       require 'json' unless defined?(::JSON)
@@ -228,7 +228,7 @@ module RDF::Sesame
                 when :bnode then RDF::Node.new(context_id['value'])
                 when :uri   then RDF::URI.new(context_id['value'])
               end
-              block.call(context) if context
+              yield context if context
             end
         end
       end
@@ -239,7 +239,7 @@ module RDF::Sesame
     ##
     # @private
     # @see RDF::Queryable#query
-    def query_pattern(pattern, &block)
+    def query_pattern(pattern)
       writer = RDF::NTriples::Writer.new
       query = {
         :context => pattern.has_context? ? writer.format_value(pattern.context) : 'null',
