@@ -39,6 +39,16 @@ module RDF::Sesame
     # @return [Server]
     attr_reader :server
 
+    # @return [String]
+    attr_reader :readable
+
+    # @return [String]
+    attr_reader :writeble
+
+    class ClientError < StandardError; end
+    class MalformedQuery < ClientError; end
+    class ServerError < StandardError; end
+
     ##
     # Initializes this `Repository` instance.
     #
@@ -80,6 +90,8 @@ module RDF::Sesame
           @id      = @options.delete(:id)
           @uri     = @options.delete(:uri) || server.url("repositories/#{@id}")
           @title   = @options.delete(:title)
+          @readable   = @options.delete(:readable)
+          @writable   = @options.delete(:writable)
 
         else
           raise ArgumentError, "expected String, RDF::URI or Hash, but got #{url_or_options.inspect}"
@@ -122,6 +134,13 @@ module RDF::Sesame
     alias_method :uri, :url
 
     ##
+    # A mapping of blank node results for this client
+    # @private
+    def nodes
+      @nodes ||= {}
+    end
+
+    ##
     # @see RDF::Repository#supports?
     def supports?(feature)
       case feature.to_sym
@@ -146,12 +165,11 @@ module RDF::Sesame
     # @see RDF::Countable#count
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
-      server.get(url(:size)) do |response|
-        case response
-          when Net::HTTPSuccess
-            size = response.body
-            size.to_i rescue 0
-          else -1 # FIXME: raise error
+      server.get(url(:size)) do |resp|
+        tmp = response(resp)
+        unless tmp
+          size = tmp.body
+          size.to_i rescue 0
         end
       end
     end
@@ -172,12 +190,8 @@ module RDF::Sesame
     # @see RDF::Enumerable#has_statement?
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
-      server.get(url(:statements, statement), 'Accept' => 'text/plain') do |response|
-        case response
-          when Net::HTTPSuccess
-            !response.body.empty?
-          else false
-        end
+      server.get(url(:statements, statement), 'Accept' => 'text/plain') do |resp|
+        !response(resp).body.empty?
       end
     end
 
@@ -216,14 +230,11 @@ module RDF::Sesame
 
       [nil, *enum_context].uniq.each do |context|
         ctxt = context ? RDF::NTriples.serialize(context) : 'null'
-        server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |response|
-          case response
-            when Net::HTTPSuccess
-              reader = RDF::NTriples::Reader.new(response.body)
-              reader.each_statement do |statement|
-                statement.context = context
-                yield statement
-              end
+        server.get(url(:statements, :context => ctxt), 'Accept' => 'text/plain') do |resp|
+          reader = RDF::NTriples::Reader.new(response(resp).body)
+          reader.each_statement do |statement|
+            statement.context = context
+            yield statement
           end
         end
       end
@@ -237,18 +248,41 @@ module RDF::Sesame
       return enum_context unless block_given?
 
       require 'json' unless defined?(::JSON)
-      server.get(url(:contexts), Server::ACCEPT_JSON) do |response|
-        case response
-          when Net::HTTPSuccess
-            json = ::JSON.parse(response.body)
-            json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
-              context = case context_id['type'].to_s.to_sym
-                when :bnode then RDF::Node.new(context_id['value'])
-                when :uri   then RDF::URI.new(context_id['value'])
-              end
-              yield context if context
+      server.get(url(:contexts), Server::ACCEPT_JSON) do |resp|
+          json = ::JSON.parse(response(resp).body)
+          json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
+            context = case context_id['type'].to_s.to_sym
+              when :bnode then RDF::Node.new(context_id['value'])
+              when :uri   then RDF::URI.new(context_id['value'])
             end
-        end
+            yield context if context
+          end
+      end
+    end
+
+    ##
+    # Returns all statements of the given query.
+    #
+    # @private
+    # @param  [String, #to_s]        query
+    # @param  [String, #to_s]        queryLn
+    # @return [RDF::Enumerator]
+    def raw_query(query, queryLn = 'sparql')
+      case queryLn.to_s
+        when 'serql'
+          qlang = 'serql'
+        else
+          qlang = 'sparql'
+      end
+      params = Addressable::URI.form_encode({ :query => query, :queryLn => qlang }).gsub("+", "%20").to_s
+      url = Addressable::URI.parse(self.url)
+      unless url.normalize.query.nil?
+        url.query = [url.query, params].compact.join('&')
+      else
+        url.query = [url.query, params].compact.join('?')
+      end
+      server.get(url, Server::ACCEPT_JSON) do |resp|
+        parse_response(response(resp))
       end
     end
 
@@ -265,14 +299,11 @@ module RDF::Sesame
       query.merge!(:subj => writer.format_value(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
       query.merge!(:pred => writer.format_value(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
       query.merge!(:obj => writer.format_value(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
-      server.get(url(:statements, query), "Accept" => "text/plain") do |response|
-        case response
-        when Net::HTTPSuccess
-          reader = RDF::NTriples::Reader.new(response.body)
-          reader.each_statement do |statement|
-            statement.context = pattern.context
-            yield statement
-          end
+      server.get(url(:statements, query), Server::ACCEPT_NTRIPLES) do |resp|
+        reader = RDF::NTriples::Reader.new(response(resp).body)
+        reader.each_statement do |statement|
+          statement.context = pattern.context
+          yield statement
         end
       end
     end
@@ -284,10 +315,12 @@ module RDF::Sesame
     def insert_statement(statement)
       ctxt = statement.has_context? ? RDF::NTriples.serialize(statement.context) : 'null'
       data = RDF::NTriples.serialize(statement)
-      server.post(url(:statements, :context => ctxt), data, 'Content-Type' => 'text/plain') do |response|
-        case response
-          when Net::HTTPSuccess then true
-          else false
+      server.post(url(:statements, :context => ctxt), data, 'Content-Type' => 'text/plain') do |resp|
+        case response(resp).message
+          when 'OK'
+            true
+          else
+            false
         end
       end
     end
@@ -297,10 +330,12 @@ module RDF::Sesame
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
-      server.delete(url(:statements, statement)) do |response|
-        case response
-          when Net::HTTPSuccess then true
-          else false
+      server.delete(url(:statements, statement)) do |resp|
+        case response(resp).message
+          when 'OK'
+            true
+          else
+            false
         end
       end
     end
@@ -310,10 +345,151 @@ module RDF::Sesame
     # @see RDF::Mutable#clear
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def clear_statements
-      server.delete(url(:statements)) do |response|
-        case response
-          when Net::HTTPSuccess then true
-          else false
+      server.delete(url(:statements)) do |resp|
+        case response(resp).message
+          when 'OK'
+            true
+          else
+            false
+        end
+      end
+    end
+
+  private
+
+    ##
+    # Executes a SPARQL query and returns the Net::HTTP::Response of the result.
+    #
+    # @param [String, #to_s] url
+    # @param [Hash{Symbol => Object}] options
+    # @option options [String] :content_type
+    # @return [String]
+    def response(response, options = {})
+      @headers['Accept'] = options[:content_type] if options[:content_type]
+      case response
+        when Net::HTTPBadRequest # 400 Bad Request
+          raise MalformedQuery.new(response.body)
+        when Net::HTTPClientError # 4xx
+          raise ClientError.new(response.body)
+        when Net::HTTPServerError # 5xx
+          raise ServerError.new(response.body)
+        when Net::HTTPSuccess # 2xx
+          response
+        else false # FIXME: raise error
+      end
+    end
+
+    ##
+    # @param [Net::HTTPSuccess] response
+    # @param [Hash{Symbol => Object}] options
+    # @return [Object]
+    def parse_response(response, options = {})
+      case content_type = options[:content_type] || response.content_type
+        when Server::RESULT_BOOL
+          response.body == 'true'
+        when Server::RESULT_JSON
+          self.class.parse_json_bindings(response.body, nodes)
+        when Server::RESULT_XML
+          self.class.parse_xml_bindings(response.body, nodes)
+        else
+          parse_rdf_serialization(response, options)
+      end
+    end
+
+    ##
+    # @param [String, Hash] json
+    # @return [<RDF::Query::Solutions>]
+    # @see http://www.w3.org/TR/rdf-sparql-json-res/#results
+    def self.parse_json_bindings(json, nodes = {})
+      require 'json' unless defined?(::JSON)
+      json = JSON.parse(json.to_s) unless json.is_a?(Hash)
+
+      case
+        when json['boolean']
+          json['boolean']
+        when json['results']
+          solutions = json['results']['bindings'].map do |row|
+            row = row.inject({}) do |cols, (name, value)|
+              cols.merge(name.to_sym => parse_json_value(value))
+            end
+            RDF::Query::Solution.new(row)
+          end
+          RDF::Query::Solutions.new(solutions)
+      end
+    end
+
+    ##
+    # @param [Hash{String => String}] value
+    # @return [RDF::Value]
+    # @see http://www.w3.org/TR/rdf-sparql-json-res/#variable-binding-results
+    def self.parse_json_value(value, nodes = {})
+      case value['type'].to_sym
+        when :bnode
+          nodes[id = value['value']] ||= RDF::Node.new(id)
+        when :uri
+          RDF::URI.new(value['value'])
+        when :literal
+          RDF::Literal.new(value['value'], :language => value['xml:lang'])
+        when :'typed-literal'
+          RDF::Literal.new(value['value'], :datatype => value['datatype'])
+        else nil
+      end
+    end
+
+    ##
+    # @param [String, REXML::Element] xml
+    # @return [<RDF::Query::Solutions>]
+    # @see http://www.w3.org/TR/rdf-sparql-json-res/#results
+    def self.parse_xml_bindings(xml, nodes = {})
+      xml.force_encoding(::Encoding::UTF_8) if xml.respond_to?(:force_encoding)
+      require 'rexml/document' unless defined?(::REXML::Document)
+      xml = REXML::Document.new(xml).root unless xml.is_a?(REXML::Element)
+
+      case
+        when boolean = xml.elements['boolean']
+          boolean.text == 'true'
+        when results = xml.elements['results']
+          solutions = results.elements.map do |result|
+            row = {}
+            result.elements.each do |binding|
+              name = binding.attributes['name'].to_sym
+              value = binding.select { |node| node.kind_of?(::REXML::Element) }.first
+              row[name] = parse_xml_value(value, nodes)
+            end
+            RDF::Query::Solution.new(row)
+          end
+          RDF::Query::Solutions.new(solutions)
+      end
+    end
+
+    ##
+    # @param [REXML::Element] value
+    # @return [RDF::Value]
+    # @see http://www.w3.org/TR/rdf-sparql-json-res/#variable-binding-results
+    def self.parse_xml_value(value, nodes = {})
+      case value.name.to_sym
+        when :bnode
+          nodes[id = value.text] ||= RDF::Node.new(id)
+        when :uri
+          RDF::URI.new(value.text)
+        when :literal
+          RDF::Literal.new(value.text, {
+            :language => value.attributes['xml:lang'],
+            :datatype => value.attributes['datatype'],
+          })
+        else nil
+      end
+    end
+
+    ##
+    # @param [Net::HTTPSuccess] response
+    # @param [Hash{Symbol => Object}] options
+    # @return [RDF::Enumerable]
+    def parse_rdf_serialization(response, options = {})
+      options = {:content_type => response.content_type} if options.empty?
+      if reader_for = RDF::Reader.for(options)
+        reader_for.new(response.body) do |reader|
+          reader # FIXME
         end
       end
     end
