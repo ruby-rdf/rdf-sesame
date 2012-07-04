@@ -122,7 +122,6 @@ module RDF::Sesame
     alias_method :uri, :url
 
     ##
-    # @private
     # @see RDF::Repository#supports?
     def supports?(feature)
       case feature.to_sym
@@ -132,21 +131,18 @@ module RDF::Sesame
     end
 
     ##
-    # @private
     # @see RDF::Durable#durable?
     def durable?
       true # TODO: would need to query the SYSTEM repository for this information
     end
 
     ##
-    # @private
     # @see RDF::Countable#empty?
     def empty?
       count.zero?
     end
 
     ##
-    # @private
     # @see RDF::Countable#count
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
@@ -161,21 +157,18 @@ module RDF::Sesame
     end
 
     ##
-    # @private
     # @see RDF::Enumerable#has_triple?
     def has_triple?(triple)
       has_statement?(RDF::Statement.from(triple))
     end
 
     ##
-    # @private
     # @see RDF::Enumerable#has_quad?
     def has_quad?(quad)
       has_statement?(RDF::Statement.new(quad[0], quad[1], quad[2], :context => quad[3]))
     end
 
     ##
-    # @private
     # @see RDF::Enumerable#has_statement?
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
@@ -189,7 +182,33 @@ module RDF::Sesame
     end
 
     ##
-    # @private
+    # Returns `true` if `self` contains the given RDF subject term.
+    #
+    # @param  [RDF::Resource] value
+    # @return [Boolean]
+    def has_subject?(value)
+      !first([value, nil, nil]).nil?
+    end
+
+    ##
+    # Returns `true` if `self` contains the given RDF predicate term.
+    #
+    # @param  [RDF::URI] value
+    # @return [Boolean]
+    def has_predicate?(value)
+      !first([nil, value, nil]).nil?
+    end
+
+    ##
+    # Returns `true` if `self` contains the given RDF object term.
+    #
+    # @param  [RDF::Term] value
+    # @return [Boolean]
+    def has_object?(value)
+      !first([nil, nil, value]).nil?
+    end
+
+    ##
     # @see RDF::Enumerable#each_statement
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def each_statement
@@ -213,7 +232,6 @@ module RDF::Sesame
     alias_method :each, :each_statement
 
     ##
-    # @private
     # @see RDF::Enumerable#each_context
     def each_context
       return enum_context unless block_given?
