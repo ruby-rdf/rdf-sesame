@@ -1,9 +1,8 @@
 require 'spec_helper'
 
 describe RDF::Sesame::Server do
-  before :each do
-    @url    = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
-    @server = RDF::Sesame::Server.new(@url)
+  before :all do
+    @url = @server.url
   end
 
   it "supports URL construction" do
@@ -56,7 +55,7 @@ describe RDF::Sesame::Server do
 
   it "supports enumerating repositories" do
     @server.should respond_to(:each_repository, :each)
-    @server.each_repository.should be_an_enumerator
+    @server.each_repository.should be_a(Enumerator)
     @server.each_repository do |repository|
       repository.should be_instance_of(RDF::Sesame::Repository)
     end

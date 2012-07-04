@@ -1,33 +1,38 @@
 require 'spec_helper'
 
 describe RDF::Sesame::Connection do
+  before :all do
+    @url = @server.url
+  end
+
   before :each do
-    @url  = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
     @conn = RDF::Sesame::Connection.new(@url)
+  end
+
+  after :each do
+    @conn.close
   end
 
   it "supports opening a connection" do
     @conn.should respond_to(:open)
-    @conn.open?.should be_false
+    @conn.should_not be_open
     @conn.open
-    @conn.open?.should be_true
+    @conn.should be_open
   end
 
   it "supports closing a connection manually" do
     @conn.should respond_to(:close)
-    @conn.open?.should be_false
     @conn.open
-    @conn.open?.should be_true
     @conn.close
-    @conn.open?.should be_false
+    @conn.should_not be_open
   end
 
   it "supports closing a connection automatically" do
-    @conn.open?.should be_false
+    @conn.should_not be_open
     @conn.open do
-      @conn.open?.should be_true
+      @conn.should be_open
     end
-    @conn.open?.should be_false
+    @conn.should_not be_open
   end
 
   it "supports HTTP GET requests" do

@@ -167,9 +167,11 @@ module RDF::Sesame
     def count
       server.get(url(:size)) do |resp|
         tmp = response(resp)
-        unless tmp
+        begin
           size = tmp.body
-          size.to_i rescue 0
+          size.to_i
+        rescue
+          0
         end
       end
     end
