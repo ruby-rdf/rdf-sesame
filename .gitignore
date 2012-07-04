@@ -3,3 +3,8 @@
 .yardoc
 pkg
 tmp
+.*~
+*~
+TAGS
+tags
+gems.tags
