@@ -1,5 +1,13 @@
 .DS_Store
 .tmp
 .yardoc
+.svn
 pkg
 tmp
+.*~
+*~
+TAGS
+tags
+gems.tags
+bin/
+.bundle/
