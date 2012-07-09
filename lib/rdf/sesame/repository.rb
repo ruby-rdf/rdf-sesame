@@ -1,5 +1,3 @@
-require "rdf/sesame/exceptions"
-
 module RDF::Sesame
   ##
   # A repository on a Sesame 2.0-compatible HTTP server.
@@ -163,14 +161,12 @@ module RDF::Sesame
     # @see RDF::Countable#count
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
-      server.get(url(:size)) do |resp|
-        tmp = response(resp)
-        begin
-          size = tmp.body
-          size.to_i
-        rescue
-          0
-        end
+      response = server.get(url(:size))
+      begin
+        size = response.body
+        size.to_i
+      rescue
+        0
       end
     end
 
@@ -190,9 +186,8 @@ module RDF::Sesame
     # @see RDF::Enumerable#has_statement?
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
-      server.get(url(:statements, statement), 'Accept' => 'text/plain') do |resp|
-        !response(resp).body.empty?
-      end
+      response = server.get(url(:statements, statement), 'Accept' => 'text/plain')
+      !response.body.empty?
     end
 
     ##
@@ -231,12 +226,10 @@ module RDF::Sesame
       [nil, *enum_context].uniq.each do |context|
         query = {}
         query.merge!(:context => RDF::NTriples.serialize(context)) if context
-        server.get(url(:statements, query), 'Accept' => 'text/plain') do |resp|
-          reader = RDF::NTriples::Reader.new(response(resp).body)
-          reader.each_statement do |statement|
-            statement.context = context
-            yield statement
-          end
+        response = server.get(url(:statements, query), 'Accept' => 'text/plain')
+        RDF::NTriples::Reader.new(response.body).each_statement do |statement|
+          statement.context = context
+          yield statement
         end
       end
     end
@@ -249,15 +242,16 @@ module RDF::Sesame
       return enum_context unless block_given?
 
       require 'json' unless defined?(::JSON)
-      server.get(url(:contexts), Server::ACCEPT_JSON) do |resp|
-          json = ::JSON.parse(response(resp).body)
-          json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
-            context = case context_id['type'].to_s.to_sym
-              when :bnode then RDF::Node.new(context_id['value'])
-              when :uri   then RDF::URI.new(context_id['value'])
-            end
-            yield context if context
-          end
+      response = server.get(url(:contexts), Server::ACCEPT_JSON)
+      json = ::JSON.parse(response.body)
+      json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
+        context = case context_id['type'].to_s.to_sym
+                  when :bnode then RDF::Node.new(context_id['value'])
+                  when :uri   then RDF::URI.new(context_id['value'])
+                  else
+                    nil
+                  end
+        yield context if context
       end
     end
 
@@ -282,9 +276,8 @@ module RDF::Sesame
       else
         url.query = [url.query, params].compact.join('?')
       end
-      server.get(url, Server::ACCEPT_JSON) do |resp|
-        parse_response(response(resp))
-      end
+      response = server.get(url, Server::ACCEPT_JSON)
+      parse_response(response)
     end
 
   protected
@@ -299,12 +292,10 @@ module RDF::Sesame
       query.merge!(:subj => writer.format_value(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
       query.merge!(:pred => writer.format_value(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
       query.merge!(:obj => writer.format_value(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
-      server.get(url(:statements, query), Server::ACCEPT_NTRIPLES) do |resp|
-        reader = RDF::NTriples::Reader.new(response(resp).body)
-        reader.each_statement do |statement|
-          statement.context = pattern.context
-          yield statement
-        end
+      response = server.get(url(:statements, query), Server::ACCEPT_NTRIPLES)
+      RDF::NTriples::Reader.new(response.body).each_statement do |statement|
+        statement.context = pattern.context
+        yield statement
       end
     end
 
@@ -316,14 +307,8 @@ module RDF::Sesame
       query = {}
       query.merge!(:context => RDF::NTriples.serialize(statement.context)) if statement.has_context?
       data = RDF::NTriples.serialize(statement)
-      server.post(url(:statements, query), data, 'Content-Type' => 'text/plain') do |resp|
-        case response(resp).message
-          when 'OK'
-            true
-          else
-            false
-        end
-      end
+      response = server.post(url(:statements, query), data, 'Content-Type' => 'text/plain')
+      response.message == "OK"
     end
 
     ##
@@ -331,14 +316,8 @@ module RDF::Sesame
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
-      server.delete(url(:statements, statement)) do |resp|
-        case response(resp).message
-          when 'OK'
-            true
-          else
-            false
-        end
-      end
+      response = server.delete(url(:statements, statement))
+      response.message == 'OK'
     end
 
     ##
@@ -346,42 +325,11 @@ module RDF::Sesame
     # @see RDF::Mutable#clear
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def clear_statements
-      server.delete(url(:statements)) do |resp|
-        case response(resp).message
-          when 'OK'
-            true
-          else
-            false
-        end
-      end
+      response = server.delete(url(:statements))
+      response.message == 'OK'
     end
 
   private
-
-    ##
-    # Executes a SPARQL query and returns the Net::HTTP::Response of the result.
-    #
-    # @param [String, #to_s] url
-    # @param [Hash{Symbol => Object}] options
-    # @option options [String] :content_type
-    # @return [String]
-    def response(response, options = {})
-      @headers['Accept'] = options[:content_type] if options[:content_type]
-      if response.is_a?(Net::HTTPSuccess)
-        response
-      else
-        case response
-        when Net::HTTPBadRequest # 400 Bad Request
-          raise MalformedQuery.new(response.body)
-        when Net::HTTPClientError # 4xx
-          raise ClientError.new(response.body)
-        when Net::HTTPServerError # 5xx
-          raise ServerError.new(response.body)
-        else
-          raise ServerError.new(response.body)
-        end
-      end
-    end
 
     ##
     # @param [Net::HTTPSuccess] response

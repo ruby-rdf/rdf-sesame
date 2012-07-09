@@ -1,4 +1,9 @@
 require 'rdf'
+require 'rdf/sesame/exceptions'
+require 'rdf/sesame/connection'
+require 'rdf/sesame/repository'
+require 'rdf/sesame/server'
+require 'rdf/sesame/version'
 
 module RDF
   ##
@@ -13,9 +18,5 @@ module RDF
   #
   # @author [Arto Bendiken](http://ar.to/)
   module Sesame
-    autoload :Connection, 'rdf/sesame/connection'
-    autoload :Repository, 'rdf/sesame/repository'
-    autoload :Server,     'rdf/sesame/server'
-    autoload :VERSION,    'rdf/sesame/version'
   end
 end
