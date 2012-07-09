@@ -1,3 +1,5 @@
+require "rdf/sesame/exceptions"
+
 module RDF::Sesame
   ##
   # A repository on a Sesame 2.0-compatible HTTP server.
@@ -44,10 +46,6 @@ module RDF::Sesame
 
     # @return [String]
     attr_reader :writeble
-
-    class ClientError < StandardError; end
-    class MalformedQuery < ClientError; end
-    class ServerError < StandardError; end
 
     ##
     # Initializes this `Repository` instance.
@@ -369,16 +367,19 @@ module RDF::Sesame
     # @return [String]
     def response(response, options = {})
       @headers['Accept'] = options[:content_type] if options[:content_type]
-      case response
+      if response.is_a?(Net::HTTPSuccess)
+        response
+      else
+        case response
         when Net::HTTPBadRequest # 400 Bad Request
           raise MalformedQuery.new(response.body)
         when Net::HTTPClientError # 4xx
           raise ClientError.new(response.body)
         when Net::HTTPServerError # 5xx
           raise ServerError.new(response.body)
-        when Net::HTTPSuccess # 2xx
-          response
-        else false # FIXME: raise error
+        else
+          raise ServerError.new(response.body)
+        end
       end
     end
 
