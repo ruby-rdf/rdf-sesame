@@ -171,7 +171,7 @@ module RDF::Sesame
     def count
       server.get(url(:size)) do |resp|
         tmp = response(resp)
-        unless tmp
+        if tmp
           size = tmp.body 
           size.to_i rescue 0
         end
@@ -197,7 +197,7 @@ module RDF::Sesame
     # @see RDF::Enumerable#has_statement?
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
-      server.get(url(:statements, statement), 'Accept' => 'text/plain') do |resp|
+      server.get(url(:statements, statement), 'Accept' => 'application/rdf+xml') do |resp|
         !response(resp).body.empty?
       end
     end
