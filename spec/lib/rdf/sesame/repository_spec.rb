@@ -1,10 +1,9 @@
-require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'spec_helper'
 require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
-  before :each do
-    @url    = RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
-    @server = RDF::Sesame::Server.new(@url)
+  before :all do
+    @url = @server.url
   end
 
   context "when created" do
@@ -74,11 +73,6 @@ describe RDF::Sesame::Repository do
 
   context "when tested" do
     before :each do
-      @repository = @server.repository((ENV['SESAME_REPOSITORY'] || :test).to_sym)
-      @repository.clear
-    end
-
-    after :all do
       @repository.clear
     end
 
