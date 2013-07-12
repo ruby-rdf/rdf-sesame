@@ -299,15 +299,24 @@ module RDF::Sesame
       end
     end
 
+    #--------------------------------------------------------------------
+    # @group RDF::Mutable methods
+
     ##
     # @private
     # @see RDF::Mutable#insert
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statement(statement)
-      query = {}
-      query.merge!(:context => RDF::NTriples.serialize(statement.context)) if statement.has_context?
-      data = RDF::NTriples.serialize(statement)
-      response = server.post(url(:statements, query), data, 'Content-Type' => 'text/plain')
+      insert_statements([statement])
+    end
+
+    ##
+    # @private
+    # @see RDF::Mutable#insert
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    def insert_statements(statements)
+      data = statements_to_text_plain(statements)
+      response = server.post(url(:statements), data, 'Content-Type' => 'text/plain')
       response.message == "OK"
     end
 
@@ -330,6 +339,15 @@ module RDF::Sesame
     end
 
   private
+
+    # Convert a list of statements to a text-plain-compatible text.
+    def statements_to_text_plain(statements)
+      graph = RDF::Repository.new
+      statements.each do |s|
+        graph << s
+      end
+      RDF::NTriples::Writer.dump(graph, nil, :encoding => Encoding::ASCII)
+    end
 
     ##
     # @param [Net::HTTPSuccess] response
