@@ -8,13 +8,13 @@ describe RDF::Sesame::Repository do
 
   context "when created" do
     it "requires exactly one argument" do
-      lambda { RDF::Sesame::Repository.new }.should raise_error(ArgumentError)
-      lambda { RDF::Sesame::Repository.new(nil, nil) }.should raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new }.to raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(nil, nil) }.to raise_error(ArgumentError)
     end
 
     it "accepts a string argument" do
       url = "#{@url}/repositories/SYSTEM"
-      lambda { RDF::Sesame::Repository.new(url) }.should_not raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
       db.server.to_uri.to_s.should == @url.to_s
@@ -22,7 +22,7 @@ describe RDF::Sesame::Repository do
 
     it "accepts a URI argument" do
       url = RDF::URI("#{@url}/repositories/SYSTEM")
-      lambda { RDF::Sesame::Repository.new(url) }.should_not raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
       db.server.to_uri.to_s.should == @url.to_s
@@ -30,7 +30,7 @@ describe RDF::Sesame::Repository do
 
     it "accepts :server and :id" do
       options = {:server => @server, :id => :SYSTEM}
-      lambda { RDF::Sesame::Repository.new(options) }.should_not raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(options) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(options)
       db.server.to_uri.to_s.should == @url.to_s
@@ -38,17 +38,17 @@ describe RDF::Sesame::Repository do
 
     it "rejects :server without :id" do
       options = {:server => @server}
-      lambda { RDF::Sesame::Repository.new(options) }.should raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(options) }.to raise_error(ArgumentError)
     end
 
     it "rejects :id without :server" do
       options = {:id => :SYSTEM}
-      lambda { RDF::Sesame::Repository.new(options) }.should raise_error(ArgumentError)
+      expect { RDF::Sesame::Repository.new(options) }.to raise_error(ArgumentError)
     end
 
     it "rejects any other argument" do
       [nil, :SYSTEM, 123, [], {}].each do |value|
-        lambda { RDF::Sesame::Repository.new(value) }.should raise_error(ArgumentError)
+        expect { RDF::Sesame::Repository.new(value) }.to raise_error(ArgumentError)
       end
     end
   end
