@@ -262,22 +262,33 @@ module RDF::Sesame
     # @param  [String, #to_s]        query
     # @param  [String, #to_s]        queryLn
     # @return [RDF::Enumerator]
-    def raw_query(query, queryLn = 'sparql')
+    def raw_query(query, queryLn = 'sparql', options={}, &block)
+      options = { infer: true }.merge(options)
+
       case queryLn.to_s
         when 'serql'
           qlang = 'serql'
         else
           qlang = 'sparql'
+          options[:format] = Server::ACCEPT_NTRIPLES if options[:format].nil? and query and query.split(' ').first.downcase.to_sym == :construct
       end
-      params = Addressable::URI.form_encode({ :query => query, :queryLn => qlang }).gsub("+", "%20").to_s
+
+      options[:format] = Server::ACCEPT_JSON unless options[:format]
+
+      params = Addressable::URI.form_encode({ :query => query, :queryLn => qlang, :infer => options[:infer] }).gsub("+", "%20").to_s
       url = Addressable::URI.parse(self.url)
       unless url.normalize.query.nil?
         url.query = [url.query, params].compact.join('&')
       else
         url.query = [url.query, params].compact.join('?')
       end
-      response = server.get(url, Server::ACCEPT_JSON)
-      parse_response(response)
+      response = server.get(url, options[:format])
+      results = parse_response(response)
+      if block_given?
+        results.each {|s| yield s }
+      else
+        results
+      end
     end
 
   protected
