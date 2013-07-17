@@ -161,7 +161,7 @@ module RDF::Sesame
     # @see RDF::Countable#count
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
-      response = server.get(url(:size))
+      response = server.get(url(:size, statements_options))
       begin
         size = response.body
         size.to_i
@@ -312,6 +312,14 @@ module RDF::Sesame
       end
     end
 
+    # Set a global context that will be used for any statements request
+    #
+    # @param context the context(s) to use
+    def set_context(*context)
+      options||={}
+      @context = serialize_context(context)
+    end
+
   protected
 
     ##
@@ -348,7 +356,7 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statements(statements)
       data = statements_to_text_plain(statements)
-      response = server.post(url(:statements), data, 'Content-Type' => 'text/plain')
+      response = server.post(url(:statements, statements_options), data, 'Content-Type' => 'text/plain')
       response.message == "OK"
     end
 
@@ -366,7 +374,7 @@ module RDF::Sesame
     # @see RDF::Mutable#clear
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def clear_statements
-      response = server.delete(url(:statements))
+      response = server.delete(url(:statements, statements_options))
       response.message == 'OK'
     end
 
@@ -494,6 +502,34 @@ module RDF::Sesame
           reader # FIXME
         end
       end
+    end
+
+    # @private
+    #
+    # Serialize the context
+    def serialize_context(context)
+      serialization = context.map do |c|
+        if c == 'null' or !c
+          c
+        else
+          RDF::NTriples.serialize(RDF::URI.new(c))
+        end
+      end
+
+      if serialization.size == 1
+        serialization.first
+      else
+        serialization
+      end
+    end
+
+    # @private
+    #
+    # Construct the statements options list
+    def statements_options
+      options = {}
+      options[:context] = @context if @context
+      options
     end
   end # class Repository
 end # module RDF::Sesame
