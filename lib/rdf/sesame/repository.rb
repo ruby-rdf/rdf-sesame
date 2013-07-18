@@ -291,7 +291,7 @@ module RDF::Sesame
           qlang = 'serql'
         else
           qlang = 'sparql'
-          options[:format] = Server::ACCEPT_NTRIPLES if options[:format].nil? and query and query.split(' ').first.downcase.to_sym == :construct
+          options[:format] = Server::ACCEPT_NTRIPLES if options[:format].nil? and query =~ /\bconstruct\b/i
       end
 
       options[:format] = Server::ACCEPT_JSON unless options[:format]
