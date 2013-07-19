@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Rdf-sesame : RDF.rb plugin for accessing Sesame 2.0-compatible repositories." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Rdf-sesame</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ruby-rdf/rdf-sesame">View on GitHub</a>
+
+          <h1 id="project_title">Rdf-sesame</h1>
+          <h2 id="project_tagline">RDF.rb plugin for accessing Sesame 2.0-compatible repositories.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ruby-rdf/rdf-sesame/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ruby-rdf/rdf-sesame/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="sesame-20-adapter-for-rdfrb" class="anchor" href="#sesame-20-adapter-for-rdfrb"><span class="octicon octicon-link"></span></a>Sesame 2.0 Adapter for RDF.rb</h1>
+
+<p>This is an <a href="http://rdf.rubyforge.org/">RDF.rb</a> plugin that adds support for <a href="http://www.openrdf.org/">Sesame 2.0</a>-compatible
+RDF repositories accessed using Sesame's <a href="http://www.openrdf.org/doc/sesame2/system/ch08.html">HTTP API</a>.</p>
+
+<ul>
+<li><a href="http://github.com/bendiken/rdf-sesame">http://github.com/bendiken/rdf-sesame</a></li>
+</ul><h2>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<ul>
+<li>{RDF::Sesame}
+
+<ul>
+<li>{RDF::Sesame::Connection}</li>
+<li>{RDF::Sesame::Server}</li>
+<li>{RDF::Sesame::Repository}</li>
+</ul>
+</li>
+</ul><p>This adapter implements the <a href="http://rdf.rubyforge.org/RDF/Repository.html"><code>RDF::Repository</code></a> interface;
+refer to the relevant RDF.rb API documentation for further usage instructions.</p>
+
+<h2>
+<a name="limitations" class="anchor" href="#limitations"><span class="octicon octicon-link"></span></a>Limitations</h2>
+
+<ul>
+<li>This adapter does not contain any SPARQL support. To use a Sesame endpoint
+with SPARQL, see the <a href="http://sparql.rubyforge.org/client/"><code>SPARQL::Client</code></a>
+gem.</li>
+<li>This adapter is not yet optimized for RDF.rb 0.2.x's bulk-operation APIs,
+meaning that statement insertions and deletions are currently performed
+one by one; this may affect the performance of loading large datasets into
+Sesame. This will be addressed in an upcoming version.</li>
+<li>This adapter is not yet optimized for RDF.rb 0.2.x's enhanced query APIs;
+this may adversely affect triple pattern query performance. This
+will be addressed in an upcoming version.</li>
+</ul><h2>
+<a name="caveats" class="anchor" href="#caveats"><span class="octicon octicon-link"></span></a>Caveats</h2>
+
+<ul>
+<li>Sesame rewrites blank node identifiers on inserted statements. For
+example, if you supply a <code>_:foobar</code> identifier, it becomes something like
+<code>_:node156oo6equx12769</code> as soon as you insert it into a Sesame repository. 
+This means that you can't construct and insert a statement containing a
+blank node term and then expect to successfully be able check for its
+existence using the <code>Repository#has_statement?</code> method. This is also the
+reason that 7 specs for <code>RDF::Repository</code> currently fail with this
+adapter.</li>
+</ul><h2>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h2>
+
+<ul>
+<li>
+<a href="http://rubygems.org/gems/rdf">RDF.rb</a> (&gt;= 0.3.0)</li>
+<li>
+<a href="http://rubygems.org/gems/json_pure">JSON</a> (&gt;= 1.4.2)</li>
+</ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>The recommended installation method is via <a href="http://rubygems.org/">RubyGems</a>.
+To install the latest official release of the <code>RDF::Sesame</code> gem, do:</p>
+
+<pre><code>% [sudo] gem install rdf-sesame
+</code></pre>
+
+<h2>
+<a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h2>
+
+<p>To get a local working copy of the development repository, do:</p>
+
+<pre><code>% git clone git://github.com/bendiken/rdf-sesame.git
+</code></pre>
+
+<p>Alternatively, download the latest development version as a tarball as
+follows:</p>
+
+<pre><code>% wget http://github.com/bendiken/rdf-sesame/tarball/master
+</code></pre>
+
+<h2>
+<a name="mailing-list" class="anchor" href="#mailing-list"><span class="octicon octicon-link"></span></a>Mailing List</h2>
+
+<ul>
+<li><a href="http://lists.w3.org/Archives/Public/public-rdf-ruby/">http://lists.w3.org/Archives/Public/public-rdf-ruby/</a></li>
+</ul><h2>
+<a name="author" class="anchor" href="#author"><span class="octicon octicon-link"></span></a>Author</h2>
+
+<ul>
+<li>
+<a href="http://github.com/bendiken">Arto Bendiken</a> - <a href="http://ar.to/">http://ar.to/</a>
+</li>
+</ul><h2>
+<a name="contributors" class="anchor" href="#contributors"><span class="octicon octicon-link"></span></a>Contributors</h2>
+
+<p>Refer to the accompanying {file:CREDITS} file.</p>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>This is free and unencumbered public domain software. For more information,
+see <a href="http://unlicense.org/">http://unlicense.org/</a> or the accompanying {file:UNLICENSE} file.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Rdf-sesame maintained by <a href="https://github.com/ruby-rdf">ruby-rdf</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
