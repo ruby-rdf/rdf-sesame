@@ -45,6 +45,9 @@ module RDF::Sesame
     # @return [String]
     attr_reader :writeble
 
+    # @return [String,Array]
+    attr_reader :context
+
     ##
     # Initializes this `Repository` instance.
     #
