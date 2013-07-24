@@ -323,6 +323,27 @@ module RDF::Sesame
       @context = serialize_context(context)
     end
 
+    ##
+    # # Clear all statements from the repository.
+    # @see RDF::Mutable#clear
+    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
+    #
+    # @param [Hash] options
+    # @option options [String] :subject Match a specific subject
+    # @option options [String] :predicate Match a specific predicate
+    # @option options [String] :object Match a specific object
+    # @option options [String] :context Match a specific graph name.
+    # @return [void]
+    def clear(options={})
+      parameters = {}
+      { :subject => :subj, :predicate => :pred, :object => :obj, :context => :context }.each do |option_key, parameter_key|
+        value = options[option_key]
+        parameters.merge! parameter_key => RDF::NTriples.serialize(RDF::URI.new(value)) if value
+      end
+      response = server.delete(url(:statements, statements_options.merge(parameters)))
+      response.message == 'OK'
+    end
+
   protected
 
     ##
@@ -369,15 +390,6 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
       response = server.delete(url(:statements, statement))
-      response.message == 'OK'
-    end
-
-    ##
-    # @private
-    # @see RDF::Mutable#clear
-    # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def clear_statements
-      response = server.delete(url(:statements, statements_options))
       response.message == 'OK'
     end
 
