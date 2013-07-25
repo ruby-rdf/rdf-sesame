@@ -324,7 +324,7 @@ module RDF::Sesame
       parameters = {}
       parameters[:update] = query
       response = server.post(url(:statements), Addressable::URI.form_encode(parameters), 'Content-Type' => 'application/x-www-form-urlencoded')
-      response.message == "OK"
+      response.code == "204"
     end
 
     # Set a global context that will be used for any statements request
@@ -353,7 +353,7 @@ module RDF::Sesame
         parameters.merge! parameter_key => RDF::NTriples.serialize(RDF::URI.new(value)) if value
       end
       response = server.delete(url(:statements, statements_options.merge(parameters)))
-      response.message == 'OK'
+      response.code == "204"
     end
 
   protected
@@ -393,7 +393,7 @@ module RDF::Sesame
     def insert_statements(statements)
       data = statements_to_text_plain(statements)
       response = server.post(url(:statements, statements_options), data, 'Content-Type' => 'text/plain')
-      response.message == "OK"
+      response.code == "204"
     end
 
     ##
@@ -402,7 +402,7 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
       response = server.delete(url(:statements, statement))
-      response.message == 'OK'
+      response.code == "204"
     end
 
   private
