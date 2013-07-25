@@ -82,7 +82,8 @@ Author
 Contributors
 ------------
 
-Refer to the accompanying {file:CREDITS} file.
+* [Aymeric Brisse](http://github.com/abrisse)
+* [Slava Kravchenko](http://github.com/cordawyn)
 
 License
 -------
