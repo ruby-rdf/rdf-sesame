@@ -289,7 +289,7 @@ module RDF::Sesame
     def raw_query(query, queryLn = 'sparql', options={}, &block)
       options = { infer: true }.merge(options)
 
-      response = if query =~ /\bdelete\b/i
+      response = if query =~ /\b(delete|insert)\b/i
         write_query(query, queryLn, options)
       else
         read_query(query, queryLn, options)
