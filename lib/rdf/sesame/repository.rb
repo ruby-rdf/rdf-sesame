@@ -226,9 +226,13 @@ module RDF::Sesame
     def each_statement
       return enum_statement unless block_given?
 
-      [nil, *enum_context].uniq.each do |context|
+      # Each context will trigger a query that will be parsed with a NTriples::Reader.
+      # This is for performance. Otherwise only one query with TriG::Reader will be
+      # necessary
+
+      ['null', *enum_context].uniq.each do |context|
         query = {}
-        query.merge!(:context => RDF::NTriples.serialize(context)) if context
+        query.merge!(:context => serialize_context(context)) if context
         response = server.get(url(:statements, query), 'Accept' => 'text/plain')
         RDF::NTriples::Reader.new(response.body).each_statement do |statement|
           statement.context = context
@@ -535,6 +539,7 @@ module RDF::Sesame
     #
     # Serialize the context
     def serialize_context(context)
+      context = [context] unless context.is_a?(Enumerable)
       serialization = context.map do |c|
         if c == 'null' or !c
           c
