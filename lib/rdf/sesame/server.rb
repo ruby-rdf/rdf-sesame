@@ -11,7 +11,7 @@ module RDF::Sesame
   #
   # @example Connecting to a Sesame server using Basic Auth & local proxy
   #   url    = RDF::URI("http://host:port")
-  #   server = RDF::Sesame::Server.new(url, {:user=> 'username', :pass => 'password', 
+  #   server = RDF::Sesame::Server.new(url, {:user=> 'username', :pass => 'password',
   #       :proxy_host => 'localhost', :proxy_port => 8888})
   #   repo = server.repositories['repositoryname']
   #
@@ -54,11 +54,11 @@ module RDF::Sesame
     ACCEPT_TRIG =  {'Accept' => 'application/x-trig'}.freeze
     ACCEPT_BINARY =  {'Accept' => 'application/x-binary-rdf'}.freeze
     ACCEPT_BINARY_TABLE = {'Accept' => 'application/x-binary-rdf-results-table'}.freeze
-    
+
     RESULT_BOOL = 'text/boolean'.freeze
     RESULT_JSON = 'application/sparql-results+json'.freeze
     RESULT_XML = 'application/sparql-results+xml'.freeze
-    
+
     # @return [RDF::URI]
     attr_reader :url
 
@@ -84,16 +84,16 @@ module RDF::Sesame
         else Addressable::URI.parse(url.to_s)
       end
       @url = RDF::URI.new(@url)
-      
+
       user = options.delete(:user) || nil
       pass = options.delete(:pass) || nil
       ssl_port = options.delete(:ssl_port) || nil
 
       @proxy_host = options.delete(:proxy_host) || nil
-      @proxy_port = options.delete(:proxy_port) || nil 
-     
+      @proxy_port = options.delete(:proxy_port) || nil
+
       @connection = options.delete(:connection) || Connection.new(@url , {:ssl_port => ssl_port, :user => user, :pass => pass, :headers => {}, :proxy_host => @proxy_host, :proxy_port => @proxy_port})
-      
+
       @options    = options
 
       if block_given?
