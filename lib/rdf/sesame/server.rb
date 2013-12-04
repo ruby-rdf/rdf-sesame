@@ -77,8 +77,6 @@ module RDF::Sesame
     # @yield  [connection]
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
-      require 'addressable/uri' unless defined?(Addressable)
-
       @url = case url
         when Addressable::URI then url
         else Addressable::URI.parse(url.to_s)
