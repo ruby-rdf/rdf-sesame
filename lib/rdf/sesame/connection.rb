@@ -21,13 +21,13 @@ module RDF::Sesame
   # call {#close} explicitly.
   #
   # @example Opening a connection to a Sesame server (1)
-  #   url  = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url  = URI.parse("http://localhost:8080/openrdf-sesame")
   #   conn = RDF::Sesame::Connection.open(url)
   #   ...
   #   conn.close
   #
   # @example Opening a connection to a Sesame server (2)
-  #   url = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url = URI.parse("http://localhost:8080/openrdf-sesame")
   #   RDF::Sesame::Connection.open(url) do |conn|
   #     ...
   #   end

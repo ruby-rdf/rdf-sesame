@@ -48,7 +48,7 @@ module RDF::Sesame
     # Initializes this `Repository` instance.
     #
     # @overload initialize(url)
-    #   @param  [String, RDF::URI] url
+    #   @param  [String, URI, RDF::URI] url
     #   @yield  [repository]
     #   @yieldparam [Repository]
     #
@@ -63,8 +63,8 @@ module RDF::Sesame
     def initialize(url_or_options, &block)
       options = {}
       case url_or_options
-        when String, RDF::URI
-          pathname = Pathname.new(url_or_options)
+        when String, RDF::URI, URI
+          pathname = Pathname.new(url_or_options.to_s)
           @server = Server.new(pathname.parent.parent.to_s)
           @id = pathname.basename.to_s
 
@@ -88,23 +88,23 @@ module RDF::Sesame
     # Returns the URL for the given server-relative `path`.
     #
     # @example Getting a Sesame server's URL
-    #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")
-    #
+    #   server.url            #=> "http://localhost:8080/openrdf-sesame"
+
     # @example Getting a Sesame server's protocol URL
-    #   server.url(:protocol) #=> RDF::URI("http://localhost:8080/openrdf-sesame/protocol")
+    #   server.url(:protocol) #=> "http://localhost:8080/openrdf-sesame/protocol"
     #
     # @param  [String, #to_s] path
-    # @return [RDF::URI]
+    # @return [String]
     def url(relative_path = nil)
       self.server.url(path(relative_path))
     end
 
     ##
-    # Returns the URL for the given repository-relative `path`.
+    # Returns the server-relative path for the given repository-relative `path`.
     #
     # @param  [String, #to_s]        path
     # @param  [Hash, RDF::Statement] query
-    # @return [RDF::URI]
+    # @return [String]
     def path(path = nil, query = {})
       url =  RDF::URI.new(path ? "repositories/#{@id}/#{path}" : "repositories/#{@id}")
       unless query.nil?

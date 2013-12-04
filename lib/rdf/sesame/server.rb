@@ -6,12 +6,11 @@ module RDF::Sesame
   # one or more readable and/or writable RDF {Repository repositories}.
   #
   # @example Connecting to a Sesame server
-  #   url    = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url    = URI.parse("http://localhost:8080/openrdf-sesame")
   #   server = RDF::Sesame::Server.new(url)
   #
   # @example Connecting to a Sesame server using Basic Auth & local proxy
-  #   url    = RDF::URI("http://host:port")
-  #   server = RDF::Sesame::Server.new(url, {:user=> 'username', :pass => 'password',
+  #   server = RDF::Sesame::Server.new("http://localhost:8080/openrdf-sesame", {:user=> 'username', :pass => 'password',
   #       :proxy_host => 'localhost', :proxy_port => 8888})
   #   repo = server.repositories['repositoryname']
   #
@@ -65,7 +64,7 @@ module RDF::Sesame
     ##
     # Initializes this `Server` instance.
     #
-    # @param  [RDF::URI]               url
+    # @param  [URI, #to_s]               url
     # @param  [Hash{Symbol => Object}] options
     # @option options [Connection] :connection (nil)
     # @yield  [connection]
@@ -85,13 +84,13 @@ module RDF::Sesame
     # Returns the URL for the given server-relative `path`.
     #
     # @example Getting a Sesame server's URL
-    #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")
+    #   server.url            #=> "http://localhost:8080/openrdf-sesame"
     #
     # @example Getting a Sesame server's protocol URL
-    #   server.url(:protocol) #=> RDF::URI("http://localhost:8080/openrdf-sesame/protocol")
+    #   server.url(:protocol) #=> "http://localhost:8080/openrdf-sesame/protocol"
     #
     # @param  [String, #to_s] path
-    # @return [RDF::URI]
+    # @return [String]
     def url(path = nil)
       self.connection.url(path)
     end
@@ -101,7 +100,7 @@ module RDF::Sesame
     ##
     # Returns the URL of this server.
     #
-    # @return [RDF::URI]
+    # @return [URI]
     def to_uri
       URI.parse(url)
     end
