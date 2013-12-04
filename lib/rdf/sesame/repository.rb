@@ -303,7 +303,7 @@ module RDF::Sesame
       options[:format] = Server::ACCEPT_JSON unless options[:format]
 
       params = Addressable::URI.form_encode({ :query => query, :queryLn => queryLn, :infer => options[:infer] }).gsub("+", "%20").to_s
-      url = Addressable::URI.parse(self.url)
+      url = Addressable::URI.parse(path)
       unless url.normalize.query.nil?
         url.query = [url.query, params].compact.join('&')
       else
@@ -450,7 +450,7 @@ module RDF::Sesame
             end
             RDF::Query::Solution.new(row)
           end
-          RDF::Query::Solutions.new(solutions)
+          RDF::Query::Solutions::Array.new(solutions)
       end
     end
 
@@ -494,7 +494,7 @@ module RDF::Sesame
             end
             RDF::Query::Solution.new(row)
           end
-          RDF::Query::Solutions.new(solutions)
+          RDF::Query::Solutions::Array.new(solutions)
       end
     end
 
