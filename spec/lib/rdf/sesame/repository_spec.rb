@@ -2,9 +2,11 @@ require 'spec_helper'
 require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
-  before :all do
-    @url = @server.url
-  end
+  let(:connection_url) {
+    uri = URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame')
+    uri.user = uri.password = nil
+    uri
+  }
 
   context "when created" do
     it "requires exactly one argument" do
@@ -13,19 +15,19 @@ describe RDF::Sesame::Repository do
     end
 
     it "accepts a string argument" do
-      url = "#{@url}/repositories/SYSTEM"
+      url = "#{connection_url}/repositories/SYSTEM"
       expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
-      db.server.to_uri.to_s.should == @url.to_s
+      db.server.to_uri.to_s.should == connection_url.to_s
     end
 
     it "accepts a URI argument" do
-      url = RDF::URI("#{@url}/repositories/SYSTEM")
+      url = RDF::URI("#{connection_url}/repositories/SYSTEM")
       expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
-      db.server.to_uri.to_s.should == @url.to_s
+      db.server.to_uri.to_s.should == connection_url.to_s
     end
 
     it "accepts :server and :id" do
@@ -33,7 +35,7 @@ describe RDF::Sesame::Repository do
       expect { RDF::Sesame::Repository.new(options) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(options)
-      db.server.to_uri.to_s.should == @url.to_s
+      db.server.to_uri.to_s.should == connection_url.to_s
     end
 
     it "rejects :server without :id" do
@@ -56,10 +58,9 @@ describe RDF::Sesame::Repository do
   context "when used" do
     it "supports URL construction" do
       @server.each_repository do |repository|
-        url = "#{@url}/repositories/#{repository.id}"
+        url = "#{connection_url}/repositories/#{repository.id}"
         repository.should respond_to(:url, :uri)
-        repository.url.should be_a_uri
-        repository.url.to_s.should == url.to_s
+        repository.url.should == url.to_s
         repository.url(:size).to_s.should == "#{url}/size"
       end
     end

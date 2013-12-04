@@ -26,10 +26,6 @@ module RDF::Sesame
   # @see http://www.openrdf.org/doc/sesame2/system/ch08.html
   # @see http://rdf.rubyforge.org/RDF/Repository.html
   class Repository < RDF::Repository
-    # @return [RDF::URI]
-    attr_reader  :url
-    alias_method :uri, :url
-
     # @return [String]
     attr_reader :id
 
@@ -65,43 +61,42 @@ module RDF::Sesame
     #   @yieldparam [Repository]
     #
     def initialize(url_or_options, &block)
+      options = {}
       case url_or_options
-        when String
-          initialize(RDF::URI.new(url_or_options), &block)
-
-        when RDF::URI
-          require 'pathname' unless defined?(Pathname)
-          @uri     = url_or_options
-          @server  = Server.new(RDF::URI.new({
-            :scheme   => @uri.scheme,
-            :userinfo => @uri.userinfo,
-            :host     => @uri.host,
-            :port     => @uri.port,
-            :path     => Pathname.new(@uri.path).parent.parent.to_s, # + '../..'
-          }))
-          @options = {}
+        when String, RDF::URI
+          pathname = Pathname.new(url_or_options)
+          @server = Server.new(pathname.parent.parent.to_s)
+          @id = pathname.basename.to_s
 
         when Hash
           raise ArgumentError, "missing options[:server]" unless url_or_options.has_key?(:server)
           raise ArgumentError, "missing options[:id]"     unless url_or_options.has_key?(:id)
-          @options = url_or_options.dup
-          @server  = @options.delete(:server)
-          @id      = @options.delete(:id)
-          @uri     = @options.delete(:uri) || server.url("repositories/#{@id}")
-          @title   = @options.delete(:title)
-          @readable   = @options.delete(:readable)
-          @writable   = @options.delete(:writable)
+          options    = url_or_options.dup
+          @server    = options.delete(:server)
+          @id        = options.delete(:id)
+          @readable  = options.delete(:readable)
+          @writable  = options.delete(:writable)
 
         else
           raise ArgumentError, "expected String, RDF::URI or Hash, but got #{url_or_options.inspect}"
       end
 
-      if block_given?
-        case block.arity
-          when 1 then yield self
-          else instance_eval(&block)
-        end
-      end
+      super(options)
+    end
+
+    #
+    # Returns the URL for the given server-relative `path`.
+    #
+    # @example Getting a Sesame server's URL
+    #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")
+    #
+    # @example Getting a Sesame server's protocol URL
+    #   server.url(:protocol) #=> RDF::URI("http://localhost:8080/openrdf-sesame/protocol")
+    #
+    # @param  [String, #to_s] path
+    # @return [RDF::URI]
+    def url(relative_path = nil)
+      self.server.url(path(relative_path))
     end
 
     ##
@@ -110,8 +105,8 @@ module RDF::Sesame
     # @param  [String, #to_s]        path
     # @param  [Hash, RDF::Statement] query
     # @return [RDF::URI]
-    def url(path = nil, query = {})
-      url = path ? RDF::URI.new("#{@uri}/#{path}") : @uri.dup # FIXME
+    def path(path = nil, query = {})
+      url =  RDF::URI.new(path ? "repositories/#{@id}/#{path}" : "repositories/#{@id}")
       unless query.nil?
         case query
           when RDF::Statement
@@ -127,7 +122,7 @@ module RDF::Sesame
             url.query_values = query unless query.empty?
         end
       end
-      return url
+      return url.to_s
     end
 
     alias_method :uri, :url
@@ -164,7 +159,7 @@ module RDF::Sesame
     # @see RDF::Countable#count
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e569
     def count
-      response = server.get(url(:size, statements_options))
+      response = server.get(path(:size, statements_options))
       begin
         size = response.body
         size.to_i
@@ -189,7 +184,7 @@ module RDF::Sesame
     # @see RDF::Enumerable#has_statement?
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def has_statement?(statement)
-      response = server.get(url(:statements, statement), 'Accept' => 'text/plain')
+      response = server.get(path(:statements, statement), 'Accept' => 'text/plain')
       !response.body.empty?
     end
 
@@ -233,7 +228,7 @@ module RDF::Sesame
       ['null', *enum_context].uniq.each do |context|
         query = {}
         query.merge!(:context => serialize_context(context)) if context
-        response = server.get(url(:statements, query), 'Accept' => 'text/plain')
+        response = server.get(path(:statements, query), 'Accept' => 'text/plain')
         RDF::NTriples::Reader.new(response.body).each_statement do |statement|
           statement.context = context
           yield statement
@@ -249,7 +244,7 @@ module RDF::Sesame
       return enum_context unless block_given?
 
       require 'json' unless defined?(::JSON)
-      response = server.get(url(:contexts), Server::ACCEPT_JSON)
+      response = server.get(path(:contexts), Server::ACCEPT_JSON)
       json = ::JSON.parse(response.body)
       json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
         context = case context_id['type'].to_s.to_sym
@@ -327,7 +322,7 @@ module RDF::Sesame
     def write_query(query, queryLn, options)
       parameters = {}
       parameters[:update] = query
-      response = server.post(url(:statements), Addressable::URI.form_encode(parameters), 'Content-Type' => 'application/x-www-form-urlencoded')
+      response = server.post(path(:statements), Addressable::URI.form_encode(parameters), 'Content-Type' => 'application/x-www-form-urlencoded')
       response.code == "204"
     end
 
@@ -356,7 +351,7 @@ module RDF::Sesame
         value = options[option_key]
         parameters.merge! parameter_key => RDF::NTriples.serialize(RDF::URI.new(value)) if value
       end
-      response = server.delete(url(:statements, statements_options.merge(parameters)))
+      response = server.delete(path(:statements, statements_options.merge(parameters)))
       response.code == "204"
     end
 
@@ -372,7 +367,7 @@ module RDF::Sesame
       query.merge!(:subj => writer.format_value(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
       query.merge!(:pred => writer.format_value(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
       query.merge!(:obj => writer.format_value(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
-      response = server.get(url(:statements, query), Server::ACCEPT_NTRIPLES)
+      response = server.get(path(:statements, query), Server::ACCEPT_NTRIPLES)
       RDF::NTriples::Reader.new(response.body).each_statement do |statement|
         statement.context = pattern.context
         yield statement
@@ -396,7 +391,7 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statements(statements)
       data = statements_to_text_plain(statements)
-      response = server.post(url(:statements, statements_options), data, 'Content-Type' => 'text/plain')
+      response = server.post(path(:statements, statements_options), data, 'Content-Type' => 'text/plain')
       response.code == "204"
     end
 
@@ -405,7 +400,7 @@ module RDF::Sesame
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
-      response = server.delete(url(:statements, statement))
+      response = server.delete(path(:statements, statement))
       response.code == "204"
     end
 
