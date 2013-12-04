@@ -17,14 +17,12 @@ PATH
   remote: .
   specs:
     rdf-sesame (0.4.2)
-      addressable (~> 2.3)
       json_pure (~> 1.8)
       rdf (~> 1.1)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    addressable (2.3.5)
     diff-lcs (1.2.4)
     json_pure (1.8.1)
     rake (10.1.0)

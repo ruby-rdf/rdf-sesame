@@ -5,8 +5,6 @@ require 'rdf/sesame/repository'
 require 'rdf/sesame/server'
 require 'rdf/sesame/version'
 
-require 'addressable/uri'
-
 module RDF
   ##
   # **`RDF::Sesame`** is a Sesame 2.0 adapter for RDF.rb.

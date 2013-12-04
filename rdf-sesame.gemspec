@@ -26,7 +26,6 @@ Gem::Specification.new do |gem|
   gem.requirements               = []
   gem.add_runtime_dependency     'json_pure',   '~> 1.8' # included in Ruby 1.9.2
   gem.add_runtime_dependency     'rdf',         '~> 1.1'
-  gem.add_runtime_dependency     'addressable', '~> 2.3'
   gem.add_development_dependency 'yard' ,       '~> 0.8'
   gem.add_development_dependency 'rspec',       '~> 2'
   gem.add_development_dependency 'rdf-spec',    '~> 1.1'
