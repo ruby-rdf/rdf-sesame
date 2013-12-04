@@ -321,7 +321,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def put(path, data, headers = {})
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
-        request = Net::HTTP::Put.new(url(url.to_s), @headers.merge(headers))
+        request = Net::HTTP::Put.new(url(path.to_s), @headers.merge(headers))
         request.body = data.to_s
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
@@ -358,9 +358,9 @@ module RDF::Sesame
 
     def url(path)
       if path
-        "#{@url.to_s}/#{path}"
+        "#{@url}/#{path}"
       else
-        @url
+        @url.to_s
       end
     end
   end # class Connection
