@@ -444,13 +444,14 @@ module RDF::Sesame
         when json['boolean']
           json['boolean']
         when json['results']
-          solutions = json['results']['bindings'].map do |row|
+          solutions = RDF::Query::Solutions()
+          json['results']['bindings'].each do |row|
             row = row.inject({}) do |cols, (name, value)|
               cols.merge(name.to_sym => parse_json_value(value))
             end
-            RDF::Query::Solution.new(row)
+            solutions << RDF::Query::Solution.new(row)
           end
-          RDF::Query::Solutions::Array.new(solutions)
+          solutions
       end
     end
 
@@ -485,16 +486,17 @@ module RDF::Sesame
         when boolean = xml.elements['boolean']
           boolean.text == 'true'
         when results = xml.elements['results']
-          solutions = results.elements.map do |result|
+          solutions = RDF::Query::Solutions()
+          results.elements.each do |result|
             row = {}
             result.elements.each do |binding|
               name = binding.attributes['name'].to_sym
               value = binding.select { |node| node.kind_of?(::REXML::Element) }.first
               row[name] = parse_xml_value(value, nodes)
             end
-            RDF::Query::Solution.new(row)
+            solutions << RDF::Query::Solution.new(row)
           end
-          RDF::Query::Solutions::Array.new(solutions)
+          solutions
       end
     end
 

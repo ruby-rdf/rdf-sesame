@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/ruby-rdf/rdf.git
-  revision: 87f3f5c3cf4c34134b28edd35c2813ea252bfc3c
+  revision: dad3787c735ca1692498bc25db6e2858dc5287b0
   branch: develop
   specs:
     rdf (1.1.0)
@@ -16,7 +16,7 @@ GIT
 PATH
   remote: .
   specs:
-    rdf-sesame (0.4.2)
+    rdf-sesame (1.0)
       addressable (~> 2.3)
       json_pure (~> 1.8)
       rdf (~> 1.1)
