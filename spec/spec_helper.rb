@@ -12,7 +12,7 @@ RSpec.configure do |config|
 end
 
 def setup
-  @server = RDF::Sesame::Server.new RDF::URI(ENV['SESAME_URL'] || "http://localhost:8080/openrdf-sesame")
+  @server = RDF::Sesame::Server.new(ENV['SESAME_URL'])
   repository_name = ENV['SESAME_REPOSITORY'] || "rdf-sesame-test"
   @repository = @server.repository(repository_name)
   unless @repository

@@ -1,16 +1,28 @@
 require 'spec_helper'
 
 describe RDF::Sesame::Server do
-  before :all do
-    @url = @server.url
-  end
+  let(:connection_url) {
+    uri = URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame')
+    uri.user = uri.password = nil
+    uri
+  }
 
   it "supports URL construction" do
     @server.should respond_to(:url, :uri)
-    @server.url.should be_a_uri
-    @server.url.to_s.should == @url.to_s
-    @server.url(:protocol).to_s.should == "#{@url}/protocol"
-    @server.url('repositories/SYSTEM').to_s.should == "#{@url}/repositories/SYSTEM"
+    @server.url.should == connection_url.to_s
+    @server.url(:protocol).should == "#{connection_url}/protocol"
+    @server.url('repositories/SYSTEM').should == "#{connection_url}/repositories/SYSTEM"
+  end
+
+  it "has a URI representation" do
+    @server.should respond_to(:to_uri)
+    @server.to_uri.should be_a(URI)
+    @server.to_uri.should == connection_url
+  end
+
+  it "has a string representation" do
+    @server.should respond_to(:to_s)
+    @server.to_s.should == connection_url.to_s
   end
 
   it "returns the Sesame connection" do

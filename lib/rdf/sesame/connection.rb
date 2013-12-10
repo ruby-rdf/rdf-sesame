@@ -21,13 +21,13 @@ module RDF::Sesame
   # call {#close} explicitly.
   #
   # @example Opening a connection to a Sesame server (1)
-  #   url  = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url  = URI.parse("http://localhost:8080/openrdf-sesame")
   #   conn = RDF::Sesame::Connection.open(url)
   #   ...
   #   conn.close
   #
   # @example Opening a connection to a Sesame server (2)
-  #   url = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url = URI.parse("http://localhost:8080/openrdf-sesame")
   #   RDF::Sesame::Connection.open(url) do |conn|
   #     ...
   #   end
@@ -41,12 +41,6 @@ module RDF::Sesame
   #
   # @see http://ruby-doc.org/core/classes/Net/HTTP.html
   class Connection
-    # @return [RDF::URI]
-    attr_reader :url
-
-    # @return [String]
-    attr_reader :ssl_port
-
     # @return [String]
     attr_reader :user
 
@@ -98,22 +92,17 @@ module RDF::Sesame
     # @param  [Hash{Symbol => Object}] options
     # @yield  [connection]
     # @yieldparam [Connection]
-    def initialize(url, options = {}, &block)
-      require 'addressable/uri' unless defined?(Addressable)
-      @url = case url
-        when Addressable::URI then url
-        else Addressable::URI.parse(url.to_s)
-      end
+    def initialize(url = nil, options = {}, &block)
+      url ||= "http://localhost:8080/openrdf-sesame"
+      parsed = URI.parse(url.to_s)
 
-      parsed = URI.parse(@url)
+      @user = options.delete(:user) || parsed.user || nil
+      @pass = options.delete(:pass) || parsed.password || nil
 
       # Preserve only those URI components that we actually require for
       # establishing a connection to the HTTP server in question:
-      @url = RDF::URI.new(to_hash)
-
-      @ssl_port = options.delete(:ssl_port) || nil
-      @user = options.delete(:user) || parsed.user || nil
-      @pass = options.delete(:pass) || parsed.password || nil
+      parsed.user = parsed.password = nil
+      @url = parsed
 
       @proxy_host = options.delete(:proxy_host) || nil
       @proxy_port = options.delete(:proxy_port) || nil
@@ -151,7 +140,7 @@ module RDF::Sesame
     #
     # @return [Symbol]
     def scheme
-      url.scheme.to_s.to_sym
+      @url.scheme.to_s.to_sym
     end
 
     ##
@@ -160,7 +149,7 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def userinfo?
-      !url.userinfo.nil?
+      !@url.userinfo.nil?
     end
 
     ##
@@ -168,7 +157,7 @@ module RDF::Sesame
     #
     # @return [String] "username:password"
     def userinfo
-      url.userinfo
+      @url.userinfo
     end
 
     ##
@@ -180,27 +169,11 @@ module RDF::Sesame
     end
 
     ##
-    # Returns any user name information for this connection.
-    #
-    # @return [String]
-    def user
-      url.user
-    end
-
-    ##
     # Returns `true` if there is password information for this connection.
     #
     # @return [Boolean]
     def password?
-      !url.password.nil?
-    end
-
-    ##
-    # Returns any password information for this connection.
-    #
-    # @return [String]
-    def password
-      url.password
+      !password.nil?
     end
 
     ##
@@ -208,7 +181,7 @@ module RDF::Sesame
     #
     # @return [String]
     def host
-      url.host.to_s
+      @url.host.to_s
     end
 
     alias_method :hostname, :host
@@ -219,7 +192,7 @@ module RDF::Sesame
     #
     # @return [Boolean]
     def port?
-      !url.port.nil? && url.port != (insecure? ? 80 : 443)
+      !@url.port.nil? && @url.port != (insecure? ? 80 : 443)
     end
 
     ##
@@ -227,20 +200,7 @@ module RDF::Sesame
     #
     # @return [Integer]
     def port
-      @ssl_port.nil? ? url.port : @ssl_port
-    end
-
-    ##
-    # Returns a `Hash` representation of this connection.
-    #
-    # @return [Hash{Symbol => Object}]
-    def to_hash
-      {
-        :scheme   => url.scheme,
-        :userinfo => url.userinfo,
-        :host     => url.host,
-        :port     => url.port,
-      }
+      @url.port
     end
 
     ##
@@ -248,7 +208,7 @@ module RDF::Sesame
     #
     # @return [RDF::URI]
     def to_uri
-      url
+      @url
     end
 
     ##
@@ -256,7 +216,7 @@ module RDF::Sesame
     #
     # @return [String]
     def to_s
-      url.to_s
+      @url.to_s
     end
 
     ##
@@ -317,7 +277,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def get(path, headers = {})
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
-        request = Net::HTTP::Get.new(http_uri(path.to_s), @headers.merge(headers))
+        request = Net::HTTP::Get.new(url(path.to_s), @headers.merge(headers))
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         if block_given?
@@ -339,7 +299,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def post(path, data, headers = {})
      Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
-        request = Net::HTTP::Post.new(http_uri(path.to_s), @headers.merge(headers))
+        request = Net::HTTP::Post.new(url(path.to_s), @headers.merge(headers))
         request.body = data.to_s
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
@@ -361,7 +321,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def put(path, data, headers = {})
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
-        request = Net::HTTP::Put.new(http_uri(path.to_s), @headers.merge(headers))
+        request = Net::HTTP::Put.new(url(path.to_s), @headers.merge(headers))
         request.body = data.to_s
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
@@ -385,7 +345,7 @@ module RDF::Sesame
     # @return [Net::HTTPResponse]
     def delete(path, headers = {})
       Net::HTTP::Proxy(@proxy_host, @proxy_port).start(host, port, :use_ssl => self.secure?) do |http|
-        request = Net::HTTP::Delete.new(http_uri(path.to_s), @headers.merge(headers))
+        request = Net::HTTP::Delete.new(url(path.to_s), @headers.merge(headers))
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
         if block_given?
@@ -396,12 +356,12 @@ module RDF::Sesame
       end
     end
 
-    private
-
-    def http_uri(path)
-      uri = URI.parse(path)
-      uri.user = uri.password = nil
-      uri.to_s
+    def url(path)
+      if path
+        "#{@url}/#{path}"
+      else
+        @url.to_s
+      end
     end
   end # class Connection
 end # module RDF::Sesame

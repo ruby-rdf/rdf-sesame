@@ -6,12 +6,11 @@ module RDF::Sesame
   # one or more readable and/or writable RDF {Repository repositories}.
   #
   # @example Connecting to a Sesame server
-  #   url    = RDF::URI("http://localhost:8080/openrdf-sesame")
+  #   url    = URI.parse("http://localhost:8080/openrdf-sesame")
   #   server = RDF::Sesame::Server.new(url)
   #
   # @example Connecting to a Sesame server using Basic Auth & local proxy
-  #   url    = RDF::URI("http://host:port")
-  #   server = RDF::Sesame::Server.new(url, {:user=> 'username', :pass => 'password',
+  #   server = RDF::Sesame::Server.new("http://localhost:8080/openrdf-sesame", {:user=> 'username', :pass => 'password',
   #       :proxy_host => 'localhost', :proxy_port => 8888})
   #   repo = server.repositories['repositoryname']
   #
@@ -59,42 +58,19 @@ module RDF::Sesame
     RESULT_JSON = 'application/sparql-results+json'.freeze
     RESULT_XML = 'application/sparql-results+xml'.freeze
 
-    # @return [RDF::URI]
-    attr_reader :url
-
-    # @return [Hash{Symbol => Object}]
-    attr_reader :options
-
     # @return [Connection]
     attr_reader :connection
 
     ##
     # Initializes this `Server` instance.
     #
-    # @param  [RDF::URI]               url
+    # @param  [URI, #to_s]               url
     # @param  [Hash{Symbol => Object}] options
     # @option options [Connection] :connection (nil)
     # @yield  [connection]
     # @yieldparam [Server]
     def initialize(url, options = {}, &block)
-      require 'addressable/uri' unless defined?(Addressable)
-
-      @url = case url
-        when Addressable::URI then url
-        else Addressable::URI.parse(url.to_s)
-      end
-      @url = RDF::URI.new(@url)
-
-      user = options.delete(:user) || nil
-      pass = options.delete(:pass) || nil
-      ssl_port = options.delete(:ssl_port) || nil
-
-      @proxy_host = options.delete(:proxy_host) || nil
-      @proxy_port = options.delete(:proxy_port) || nil
-
-      @connection = options.delete(:connection) || Connection.new(@url , {:ssl_port => ssl_port, :user => user, :pass => pass, :headers => {}, :proxy_host => @proxy_host, :proxy_port => @proxy_port})
-
-      @options    = options
+      @connection = options.delete(:connection) || Connection.new(url, options)
 
       if block_given?
         case block.arity
@@ -108,15 +84,15 @@ module RDF::Sesame
     # Returns the URL for the given server-relative `path`.
     #
     # @example Getting a Sesame server's URL
-    #   server.url            #=> RDF::URI("http://localhost:8080/openrdf-sesame")
+    #   server.url            #=> "http://localhost:8080/openrdf-sesame"
     #
     # @example Getting a Sesame server's protocol URL
-    #   server.url(:protocol) #=> RDF::URI("http://localhost:8080/openrdf-sesame/protocol")
+    #   server.url(:protocol) #=> "http://localhost:8080/openrdf-sesame/protocol"
     #
     # @param  [String, #to_s] path
-    # @return [RDF::URI]
+    # @return [String]
     def url(path = nil)
-      path ? RDF::URI.new("#{@url}/#{path}") : @url # FIXME
+      self.connection.url(path)
     end
 
     alias_method :uri, :url
@@ -124,9 +100,9 @@ module RDF::Sesame
     ##
     # Returns the URL of this server.
     #
-    # @return [RDF::URI]
+    # @return [URI]
     def to_uri
-      url
+      URI.parse(url)
     end
 
     ##
@@ -134,7 +110,7 @@ module RDF::Sesame
     #
     # @return [String]
     def to_s
-      url.to_s
+      url
     end
 
     ##
@@ -154,7 +130,7 @@ module RDF::Sesame
     # @return [Integer]
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e180
     def protocol
-      response = get(url(:protocol))
+      response = get(:protocol)
       version = response.body
       version.to_i rescue 0
     end
@@ -207,7 +183,7 @@ module RDF::Sesame
     def repositories
       require 'json' unless defined?(::JSON)
 
-      response = get(url(:repositories), ACCEPT_JSON)
+      response = get(:repositories, ACCEPT_JSON)
 
       json = ::JSON.parse(response.body)
       json['results']['bindings'].inject({}) do |repositories, binding|

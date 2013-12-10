@@ -1,17 +1,19 @@
 require 'spec_helper'
 
 describe RDF::Sesame::Connection do
-  before :all do
-    @url = @server.url
-  end
-
   before :each do
-    @conn = RDF::Sesame::Connection.new(@url)
+    @conn = RDF::Sesame::Connection.new(ENV['SESAME_URL'])
   end
 
   after :each do
     @conn.close
   end
+
+  let(:connection_url) {
+    uri = URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame')
+    uri.user = uri.password = nil
+    uri
+  }
 
   it "supports opening a connection" do
     @conn.should respond_to(:open)
@@ -40,7 +42,7 @@ describe RDF::Sesame::Connection do
   end
 
   it "performs HTTP GET requests" do
-    response = @conn.get("#{@url.path}/protocol")
+    response = @conn.get('protocol')
     response.should be_a_kind_of(Net::HTTPSuccess)
     response.body.should be_a String
   end
@@ -65,12 +67,12 @@ describe RDF::Sesame::Connection do
 
   it "has a URI representation" do
     @conn.should respond_to(:to_uri)
-    @conn.to_uri.should be_a_uri
-    @conn.to_uri.to_s.should == RDF::URI(@url.to_hash.merge(:path => '')).to_s
+    @conn.to_uri.should be_a(URI)
+    @conn.to_uri.should == connection_url
   end
 
   it "has a string representation" do
     @conn.should respond_to(:to_s)
-    @conn.to_s.should == RDF::URI(@url.to_hash.merge(:path => '')).to_s
+    @conn.to_s.should == connection_url.to_s
   end
 end
