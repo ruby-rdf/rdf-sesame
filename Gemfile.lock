@@ -16,7 +16,7 @@ GIT
 PATH
   remote: .
   specs:
-    rdf-sesame (1.0)
+    rdf-sesame (1.1)
       addressable (~> 2.3)
       json_pure (~> 1.8)
       rdf (~> 1.1)
