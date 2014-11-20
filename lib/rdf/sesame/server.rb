@@ -54,6 +54,9 @@ module RDF::Sesame
     ACCEPT_BINARY =  {'Accept' => 'application/x-binary-rdf'}.freeze
     ACCEPT_BINARY_TABLE = {'Accept' => 'application/x-binary-rdf-results-table'}.freeze
 
+    CONTENT_TYPE_TEXT = {'Content-Type' => 'text/plain'}.freeze
+    CONTENT_TYPE_X_FORM = {'Content-Type' => 'application/x-www-form-urlencoded' }.freeze
+
     RESULT_BOOL = 'text/boolean'.freeze
     RESULT_JSON = 'application/sparql-results+json'.freeze
     RESULT_XML = 'application/sparql-results+xml'.freeze
