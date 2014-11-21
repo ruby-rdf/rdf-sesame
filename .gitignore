@@ -11,3 +11,4 @@ tags
 gems.tags
 bin/
 .bundle/
+Gemfile.lock
