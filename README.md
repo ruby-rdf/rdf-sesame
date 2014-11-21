@@ -36,7 +36,7 @@ Caveats
 
 * Sesame rewrites blank node identifiers on inserted statements. For
   example, if you supply a `_:foobar` identifier, it becomes something like
-  `_:node156oo6equx12769` as soon as you insert it into a Sesame repository. 
+  `_:node156oo6equx12769` as soon as you insert it into a Sesame repository.
   This means that you can't construct and insert a statement containing a
   blank node term and then expect to successfully be able check for its
   existence using the `Repository#has_statement?` method. This is also the
@@ -46,8 +46,8 @@ Caveats
 Dependencies
 ------------
 
-* [RDF.rb](http://rubygems.org/gems/rdf) (>= 0.3.0)
-* [JSON](http://rubygems.org/gems/json_pure) (>= 1.4.2)
+* [RDF.rb](http://rubygems.org/gems/rdf) (~> 1.1)
+* [JSON](http://rubygems.org/gems/json_pure) (~> 1.8)
 
 Installation
 ------------
@@ -62,12 +62,12 @@ Download
 
 To get a local working copy of the development repository, do:
 
-    % git clone git://github.com/bendiken/rdf-sesame.git
+    % git clone git://github.com/ruby-rdf/rdf-sesame.git
 
 Alternatively, download the latest development version as a tarball as
 follows:
 
-    % wget http://github.com/bendiken/rdf-sesame/tarball/master
+    % wget https://github.com/ruby-rdf/rdf-sesame/tarball/master
 
 Mailing List
 ------------
@@ -78,11 +78,11 @@ Author
 ------
 
 * [Arto Bendiken](http://github.com/bendiken) - <http://ar.to/>
+* [Aymeric Brisse](http://github.com/abrisse)
 
 Contributors
 ------------
 
-* [Aymeric Brisse](http://github.com/abrisse)
 * [Slava Kravchenko](http://github.com/cordawyn)
 
 License

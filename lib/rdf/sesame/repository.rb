@@ -44,6 +44,9 @@ module RDF::Sesame
     # @return [String,Array]
     attr_reader :context
 
+    # Maximum length for GET query
+    MAX_LENGTH_GET_QUERY = 2500
+
     ##
     # Initializes this `Repository` instance.
     #
@@ -279,12 +282,14 @@ module RDF::Sesame
     end
 
     ##
-    # Returns all statements of the given query.
+    # Returns all statements of the given query when the query
+    # is a READ query. Execute a WRITE query and returns the
+    # status of the query.
     #
     # @private
     # @param  [String, #to_s]        query
     # @param  [String, #to_s]        queryLn
-    # @return [RDF::Enumerator]
+    # @return [RDF::Enumerator, Boolean]
     def raw_query(query, queryLn = 'sparql', options={}, &block)
       options = { infer: true }.merge(options)
 
@@ -295,21 +300,34 @@ module RDF::Sesame
       end
     end
 
+    ##
+    # Returns all statements of the given query.
+    #
+    # @private
+    # @param  [String, #to_s]        query
+    # @param  [String, #to_s]        queryLn
+    # @return [RDF::Enumerator]
     def read_query(query, queryLn, options)
       if queryLn == 'sparql' and options[:format].nil? and query =~ /\bconstruct\b/i
         options[:format] = Server::ACCEPT_NTRIPLES
       end
-
       options[:format] = Server::ACCEPT_JSON unless options[:format]
 
-      params = Addressable::URI.form_encode({ :query => query, :queryLn => queryLn, :infer => options[:infer] }).gsub("+", "%20").to_s
-      url = Addressable::URI.parse(path)
-      unless url.normalize.query.nil?
-        url.query = [url.query, params].compact.join('&')
+      parameters = { :query => query, :queryLn => queryLn, :infer => options[:infer] }
+
+      response = if query.size > MAX_LENGTH_GET_QUERY
+        headers = Server::CONTENT_TYPE_X_FORM.merge(options[:format])
+        server.post(path, Addressable::URI.form_encode(parameters), headers)
       else
-        url.query = [url.query, params].compact.join('?')
+        params = Addressable::URI.form_encode(parameters).gsub("+", "%20").to_s
+        url = Addressable::URI.parse(path)
+        unless url.normalize.query.nil?
+          url.query = [url.query, params].compact.join('&')
+        else
+          url.query = [url.query, params].compact.join('?')
+        end
+        server.get(url, options[:format])
       end
-      response = server.get(url, options[:format])
 
       results = parse_response(response)
       if block_given?
@@ -319,10 +337,19 @@ module RDF::Sesame
       end
     end
 
+    ##
+    # Execute a WRITE query against the repository.
+    # Returns true if the query was succesful.
+    #
+    # @private
+    # @param  [String, #to_s]        query
+    # @param  [String, #to_s]        queryLn
+    # @param  [Hash]                 options
+    # @return [Boolean]
     def write_query(query, queryLn, options)
       parameters = {}
       parameters[:update] = query
-      response = server.post(path(:statements), Addressable::URI.form_encode(parameters), 'Content-Type' => 'application/x-www-form-urlencoded')
+      response = server.post(path(:statements), Addressable::URI.form_encode(parameters), Server::CONTENT_TYPE_X_FORM)
       response.code == "204"
     end
 
@@ -391,7 +418,7 @@ module RDF::Sesame
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def insert_statements(statements)
       data = statements_to_text_plain(statements)
-      response = server.post(path(:statements, statements_options), data, 'Content-Type' => 'text/plain')
+      response = server.post(path(:statements, statements_options), data, Server::CONTENT_TYPE_TEXT)
       response.code == "204"
     end
 

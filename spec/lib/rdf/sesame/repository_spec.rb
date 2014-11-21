@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'rdf/ntriples'
 require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
@@ -78,6 +79,58 @@ describe RDF::Sesame::Repository do
     end
 
     # @see lib/rdf/spec/repository.rb in rdf-spec
-    include RDF_Repository
+    # include RDF_Repository
   end
+
+  describe "#sparql_query" do
+    before(:all) do
+      path = File.join(File.dirname(__FILE__), '..', '..', '..', 'etc', 'doap.nt')
+      @repository.load(path)
+    end
+
+    after(:all) do
+      @repository.clear
+    end
+
+    let(:execution) do
+      @repository.sparql_query(query)
+    end
+
+    context "with a SELECT query" do
+      let(:query) do
+        "SELECT ?name WHERE { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }"
+      end
+
+      it "returns a RDF::Query::Solutions" do
+        execution.should be_kind_of(RDF::Query::Solutions)
+        execution.should_not be_empty
+      end
+    end
+
+    context "with a CONSTRUCT query" do
+      let(:query) do
+        "CONSTRUCT { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }
+        WHERE { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }"
+      end
+
+      it "returns a RDF::NTriples::Reader" do
+        execution.should be_kind_of(RDF::NTriples::Reader)
+        execution.should have_statement(RDF::Statement.new(RDF::URI('http://ar.to/#self'), RDF::URI('http://xmlns.com/foaf/0.1/name'), RDF::Literal('Arto Bendiken')))
+      end
+    end
+
+    context "with a big query (> #{RDF::Sesame::Repository::MAX_LENGTH_GET_QUERY} bytes)" do
+      let(:query) do
+        q = "CONSTRUCT { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }
+        WHERE { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }"
+        RDF::Sesame::Repository::MAX_LENGTH_GET_QUERY.times { q << " " }
+        q
+      end
+
+      it "returns a RDF::NTriples::Reader" do
+        execution.should be_kind_of(RDF::NTriples::Reader)
+      end
+    end
+  end
+
 end

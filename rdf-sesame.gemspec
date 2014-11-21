@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.description        = 'RDF.rb plugin providing a Sesame 2.0 storage adapter.'
   gem.rubyforge_project  = 'rdf'
 
-  gem.authors            = ['Arto Bendiken', 'Slava Kravchenko']
+  gem.authors            = ['Arto Bendiken', 'Aymeric Brisse']
   gem.email              = 'public-rdf-ruby@w3.org'
 
   gem.platform           = Gem::Platform::RUBY
