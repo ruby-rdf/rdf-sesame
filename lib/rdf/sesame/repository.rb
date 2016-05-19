@@ -44,6 +44,9 @@ module RDF::Sesame
     # @return [String]
     attr_reader :context
 
+    # @return [RDF::URI]
+    attr_reader :context_uri
+
     # Maximum length for GET query
     MAX_LENGTH_GET_QUERY = 2500
 
@@ -359,6 +362,12 @@ module RDF::Sesame
     def set_context(*context)
       options||={}
       @context = Array(serialize_context(context)).first
+      @context_uri =  if context
+                        uri = context[1..-2]
+                        uri && !uri.empty? ? RDF::URI.new(uri) : nil
+                      else
+                        nil
+                      end
     end
 
     ##
@@ -427,6 +436,7 @@ module RDF::Sesame
     # @see RDF::Mutable#delete
     # @see http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
     def delete_statement(statement)
+      statement.context = context_uri if context_uri
       response = server.delete(path(:statements, statement))
       response.code == "204"
     end
