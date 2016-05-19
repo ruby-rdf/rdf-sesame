@@ -5,74 +5,78 @@ describe RDF::Sesame::Connection do
     @conn = RDF::Sesame::Connection.new(ENV['SESAME_URL'])
   end
 
+  subject do
+    @conn
+  end
+
   after :each do
     @conn.close
   end
 
-  let(:connection_url) {
-    uri = URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame')
-    uri.user = uri.password = nil
-    uri
-  }
+  let(:connection_url) do
+    URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame').tap do |uri|
+      uri.user = uri.password = nil
+    end
+  end
 
   it "supports opening a connection" do
-    @conn.should respond_to(:open)
-    @conn.should_not be_open
-    @conn.open
-    @conn.should be_open
+    expect(subject).to respond_to(:open)
+    expect(subject).not_to be_open
+    subject.open
+    expect(subject).to be_open
   end
 
   it "supports closing a connection manually" do
-    @conn.should respond_to(:close)
-    @conn.open
-    @conn.close
-    @conn.should_not be_open
+    expect(subject).to respond_to(:close)
+    subject.open
+    subject.close
+    expect(subject).not_to be_open
   end
 
   it "supports closing a connection automatically" do
-    @conn.should_not be_open
-    @conn.open do
-      @conn.should be_open
+    expect(subject).not_to be_open
+    subject.open do
+      expect(subject).to be_open
     end
-    @conn.should_not be_open
+    expect(subject).not_to be_open
   end
 
   it "supports HTTP GET requests" do
-    @conn.should respond_to(:get)
+    expect(subject).to respond_to(:get)
   end
 
   it "performs HTTP GET requests" do
-    response = @conn.get('protocol')
-    response.should be_a_kind_of(Net::HTTPSuccess)
-    response.body.should be_a String
+    response = subject.get('protocol')
+    expect(response).to be_a_kind_of(Net::HTTPSuccess)
+    expect(response.body).to be_a(String)
   end
 
   it "supports HTTP POST requests" do
-    @conn.should respond_to(:post)
+    expect(subject).to respond_to(:post)
   end
 
   it "performs HTTP POST requests"
 
   it "supports HTTP PUT requests" do
-    @conn.should respond_to(:put)
+    expect(subject).to respond_to(:put)
   end
 
   it "performs HTTP PUT requests"
 
   it "supports HTTP DELETE requests" do
-    @conn.should respond_to(:delete)
+    expect(subject).to respond_to(:delete)
   end
 
   it "performs HTTP DELETE requests"
 
   it "has a URI representation" do
-    @conn.should respond_to(:to_uri)
-    @conn.to_uri.should be_a(URI)
-    @conn.to_uri.should == connection_url
+    expect(subject).to respond_to(:to_uri)
+    expect(subject.to_uri).to be_a(URI)
+    expect(subject.to_uri).to eq connection_url
   end
 
   it "has a string representation" do
-    @conn.should respond_to(:to_s)
-    @conn.to_s.should == connection_url.to_s
+    expect(subject).to respond_to(:to_s)
+    expect(subject.to_s).to eq connection_url.to_s
   end
 end
