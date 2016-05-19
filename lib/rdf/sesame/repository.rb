@@ -41,7 +41,7 @@ module RDF::Sesame
     # @return [String]
     attr_reader :writeble
 
-    # @return [String,Array]
+    # @return [String]
     attr_reader :context
 
     # Maximum length for GET query
@@ -358,7 +358,7 @@ module RDF::Sesame
     # @param context the context(s) to use
     def set_context(*context)
       options||={}
-      @context = serialize_context(context)
+      @context = Array(serialize_context(context)).first
     end
 
     ##
