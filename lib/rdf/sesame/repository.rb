@@ -349,6 +349,7 @@ module RDF::Sesame
     def write_query(query, queryLn, options)
       parameters = {}
       parameters[:update] = query
+      parameters[:infer] = options[:infer]
       response = server.post(path(:statements), Addressable::URI.form_encode(parameters), Server::CONTENT_TYPE_X_FORM)
       response.code == "204"
     end

@@ -1,5 +1,5 @@
 require 'rdf/sesame'
-require 'rdf/spec'
+#require 'rdf/spec'
 
 RSpec.configure do |config|
   config.before(:all) do

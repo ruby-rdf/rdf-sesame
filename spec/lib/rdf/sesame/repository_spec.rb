@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'rdf/ntriples'
-require 'rdf/spec/repository'
+#require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
   let(:connection_url) {
