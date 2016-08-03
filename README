@@ -69,6 +69,19 @@ follows:
 
     % wget https://github.com/ruby-rdf/rdf-sesame/tarball/master
 
+Tests
+-----
+
+In order to run test, you should use dotenv (which is set as a development dependency) and have a .env file with the following environment variables:
+```
+SESAME_URL=http://localhost:8080/openrdf-sesame # has to be an accessible openrdf-sesame server
+SESAME_REPOSITORY=integration_test # has to be the name of an existing repository on which we'll be doing the integration tests.
+```
+
+You can then run them with:
+
+    % bundle exec dotenv rake spec
+
 Mailing List
 ------------
 

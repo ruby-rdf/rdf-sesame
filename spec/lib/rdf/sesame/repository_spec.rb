@@ -3,11 +3,11 @@ require 'rdf/ntriples'
 #require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
-  let(:connection_url) {
-    uri = URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame')
-    uri.user = uri.password = nil
-    uri
-  }
+  let(:connection_url) do
+    URI.parse(ENV['SESAME_URL'] || 'http://localhost:8080/openrdf-sesame').tap do |uri|
+      uri.user = uri.password = nil
+    end
+  end
 
   context "when created" do
     it "requires exactly one argument" do
@@ -20,7 +20,7 @@ describe RDF::Sesame::Repository do
       expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
-      db.server.to_uri.to_s.should == connection_url.to_s
+      expect(db.server.to_uri.to_s).to eq connection_url.to_s
     end
 
     it "accepts a URI argument" do
@@ -28,7 +28,7 @@ describe RDF::Sesame::Repository do
       expect { RDF::Sesame::Repository.new(url) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(url)
-      db.server.to_uri.to_s.should == connection_url.to_s
+      expect(db.server.to_uri.to_s).to eq connection_url.to_s
     end
 
     it "accepts :server and :id" do
@@ -36,7 +36,7 @@ describe RDF::Sesame::Repository do
       expect { RDF::Sesame::Repository.new(options) }.not_to raise_error
 
       db = RDF::Sesame::Repository.new(options)
-      db.server.to_uri.to_s.should == connection_url.to_s
+      expect(db.server.to_uri.to_s).to eq connection_url.to_s
     end
 
     it "rejects :server without :id" do
@@ -60,15 +60,15 @@ describe RDF::Sesame::Repository do
     it "supports URL construction" do
       @server.each_repository do |repository|
         url = "#{connection_url}/repositories/#{repository.id}"
-        repository.should respond_to(:url, :uri)
-        repository.url.should == url.to_s
-        repository.url(:size).to_s.should == "#{url}/size"
+        expect(repository).to respond_to(:url, :uri)
+        expect(repository.url).to eq url.to_s
+        expect(repository.url(:size).to_s).to eq "#{url}/size"
       end
     end
 
     it "returns the size of each repository" do
       @server.each_repository do |repository|
-        repository.size.should be_a_kind_of(Numeric)
+        expect(repository.size).to be_a_kind_of(Numeric)
       end
     end
   end
@@ -102,8 +102,8 @@ describe RDF::Sesame::Repository do
       end
 
       it "returns a RDF::Query::Solutions" do
-        execution.should be_kind_of(RDF::Query::Solutions)
-        execution.should_not be_empty
+        expect(execution).to be_kind_of(RDF::Query::Solutions)
+        expect(execution).not_to be_empty
       end
     end
 
@@ -114,8 +114,8 @@ describe RDF::Sesame::Repository do
       end
 
       it "returns a RDF::NTriples::Reader" do
-        execution.should be_kind_of(RDF::NTriples::Reader)
-        execution.should have_statement(RDF::Statement.new(RDF::URI('http://ar.to/#self'), RDF::URI('http://xmlns.com/foaf/0.1/name'), RDF::Literal('Arto Bendiken')))
+        expect(execution).to be_kind_of(RDF::NTriples::Reader)
+        expect(execution).to have_statement(RDF::Statement.new(RDF::URI('http://ar.to/#self'), RDF::URI('http://xmlns.com/foaf/0.1/name'), RDF::Literal('Arto Bendiken')))
       end
     end
 
@@ -128,7 +128,7 @@ describe RDF::Sesame::Repository do
       end
 
       it "returns a RDF::NTriples::Reader" do
-        execution.should be_kind_of(RDF::NTriples::Reader)
+        expect(execution).to be_kind_of(RDF::NTriples::Reader)
       end
     end
   end
