@@ -115,11 +115,11 @@ module RDF::Sesame
           when RDF::Statement
             writer = RDF::NTriples::Writer.new
             q  = {
-              :subj    => writer.format_value(query.subject),
-              :pred    => writer.format_value(query.predicate),
-              :obj     => writer.format_value(query.object)
+              :subj    => writer.format_term(query.subject),
+              :pred    => writer.format_term(query.predicate),
+              :obj     => writer.format_term(query.object)
             }
-            q.merge!(:context => writer.format_value(query.context)) if query.has_context?
+            q.merge!(:context => writer.format_term(query.graph_name)) if query.has_graph?
             url.query_values = q
           when Hash
             url.query_values = query unless query.empty?
@@ -141,7 +141,7 @@ module RDF::Sesame
     # @see RDF::Repository#supports?
     def supports?(feature)
       case feature.to_sym
-        when :context then true # statement contexts / named graphs
+        when :graph_name then true # statement contexts / named graphs
         else super
       end
     end
@@ -180,7 +180,7 @@ module RDF::Sesame
     ##
     # @see RDF::Enumerable#has_quad?
     def has_quad?(quad)
-      has_statement?(RDF::Statement.new(quad[0], quad[1], quad[2], :context => quad[3]))
+      has_statement?(RDF::Statement.new(quad[0], quad[1], quad[2], :graph_name => quad[3]))
     end
 
     ##
@@ -228,12 +228,12 @@ module RDF::Sesame
       # This is for performance. Otherwise only one query with TriG::Reader will be
       # necessary
 
-      ['null', *enum_context].uniq.each do |context|
+      ['null', *enum_graph].uniq.each do |context|
         query = {}
         query.merge!(:context => serialize_context(context)) if context
         response = server.get(path(:statements, query), 'Accept' => 'text/plain')
         RDF::NTriples::Reader.new(response.body).each_statement do |statement|
-          statement.context = context
+          statement.graph_name = context
           yield statement
         end
       end
@@ -244,10 +244,10 @@ module RDF::Sesame
     ##
     # @see RDF::Enumerable#each_context
     def each_context
-      return enum_context unless block_given?
+      return enum_graph unless block_given?
 
       require 'json' unless defined?(::JSON)
-      response = server.get(path(:contexts), Server::ACCEPT_JSON)
+      response = server.get(path(:graph_names), Server::ACCEPT_JSON)
       json = ::JSON.parse(response.body)
       json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
         context = case context_id['type'].to_s.to_sym
@@ -371,13 +371,12 @@ module RDF::Sesame
     # @option options [String] :subject Match a specific subject
     # @option options [String] :predicate Match a specific predicate
     # @option options [String] :object Match a specific object
-    # @option options [String] :context Match a specific graph name.
+    # @option options [String] :graph_name Match a specific graph name.
     # @return [void]
-    def clear(options={})
+    def clear(options = {})
       parameters = {}
-      { :subject => :subj, :predicate => :pred, :object => :obj, :context => :context }.each do |option_key, parameter_key|
-        value = options[option_key]
-        parameters.merge! parameter_key => RDF::NTriples.serialize(RDF::URI.new(value)) if value
+      { :subject => :subj, :predicate => :pred, :object => :obj, :graph_name => :context }.each do |option_key, parameter_key|
+        parameters.merge! parameter_key => RDF::NTriples.serialize(RDF::URI.new(options[option_key])) if options.has_key?(option_key)
       end
       response = server.delete(path(:statements, statements_options.merge(parameters)))
       response.code == "204"
@@ -388,19 +387,20 @@ module RDF::Sesame
     ##
     # @private
     # @see RDF::Queryable#query
-    def query_pattern(pattern)
+    def query_pattern(pattern, options = {}, &block)
       writer = RDF::NTriples::Writer.new
       query = {}
-      query.merge!(:context => writer.format_value(pattern.context)) if pattern.has_context?
-      query.merge!(:subj => writer.format_value(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
-      query.merge!(:pred => writer.format_value(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
-      query.merge!(:obj => writer.format_value(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
+      query.merge!(:context => writer.format_term(pattern.graph_name)) if pattern.has_graph?
+      query.merge!(:subj => writer.format_term(pattern.subject)) unless pattern.subject.is_a?(RDF::Query::Variable) || pattern.subject.nil?
+      query.merge!(:pred => writer.format_term(pattern.predicate)) unless pattern.predicate.is_a?(RDF::Query::Variable) || pattern.predicate.nil?
+      query.merge!(:obj => writer.format_term(pattern.object)) unless pattern.object.is_a?(RDF::Query::Variable) || pattern.object.nil?
       response = server.get(path(:statements, query), Server::ACCEPT_NTRIPLES)
       RDF::NTriples::Reader.new(response.body).each_statement do |statement|
-        statement.context = pattern.context
-        yield statement
+        statement.graph_name = pattern.graph_name
+        yield statement if block_given?
       end
     end
+
 
     #--------------------------------------------------------------------
     # @group RDF::Mutable methods
