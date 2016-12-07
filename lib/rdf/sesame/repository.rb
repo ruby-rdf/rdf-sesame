@@ -228,7 +228,7 @@ module RDF::Sesame
       # This is for performance. Otherwise only one query with TriG::Reader will be
       # necessary
 
-      ['null', *enum_graph].uniq.each do |context|
+      ['null', *graph_names].uniq.each do |context|
         query = {}
         query.merge!(:context => serialize_context(context)) if context
         response = server.get(path(:statements, query), 'Accept' => 'text/plain')
@@ -242,22 +242,15 @@ module RDF::Sesame
     alias_method :each, :each_statement
 
     ##
-    # @see RDF::Enumerable#each_context
-    def each_context
-      return enum_graph unless block_given?
-
-      require 'json' unless defined?(::JSON)
-      response = server.get(path(:graph_names), Server::ACCEPT_JSON)
-      json = ::JSON.parse(response.body)
-      json['results']['bindings'].map { |binding| binding['contextID'] }.each do |context_id|
-        context = case context_id['type'].to_s.to_sym
-                  when :bnode then RDF::Node.new(context_id['value'])
-                  when :uri   then RDF::URI.new(context_id['value'])
-                  else
-                    nil
-                  end
-        yield context if context
-      end
+    # Returns all unique RDF graph names, other than the default graph.
+    #
+    # @param  unique (true)
+    # @return [Array<RDF::Resource>]
+    # @see    #each_graph
+    # @see    #enum_graph
+    # @since 2.0
+    def graph_names(unique: true)
+      fetch_graph_names
     end
 
     # Run a raw SPARQL query.
@@ -587,6 +580,30 @@ module RDF::Sesame
       options = {}
       options[:context] = @context if @context
       options
+    end
+
+    # @private
+    #
+    # Fetch the graph names from SESAME API
+    def fetch_graph_names
+      require 'json' unless defined?(::JSON)
+
+      response = server.get(path(:contexts), Server::ACCEPT_JSON)
+      json = ::JSON.parse(response.body)
+
+      json['results']['bindings'].map do |binding|
+        binding['contextID']
+      end
+      .map do |context_id|
+        case context_id['type'].to_s.to_sym
+        when :bnode
+          RDF::Node.new(context_id['value'])
+        when :uri
+          RDF::URI.new(context_id['value'])
+        else
+          nil
+        end
+      end.compact
     end
   end # class Repository
 end # module RDF::Sesame
