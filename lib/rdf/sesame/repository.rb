@@ -172,6 +172,23 @@ module RDF::Sesame
     end
 
     ##
+    # Returns all namespaces on this Sesame repository.
+    #
+    # @return [Hash{Symbol => RDF::URI}]
+    # @see    #repository
+    # @see    #each_repository
+    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
+    def namespaces
+      require 'json' unless defined?(::JSON)
+
+      response = server.get(path(:namespaces), Server::ACCEPT_JSON)
+      json = ::JSON.parse(response.body)
+      json['results']['bindings'].each_with_object({}) do |binding, namespaces|
+        namespaces[binding['prefix']['value'].to_sym] = RDF::URI.new(binding['namespace']['value'])
+      end
+    end
+
+    ##
     # @see RDF::Enumerable#has_triple?
     def has_triple?(triple)
       has_statement?(RDF::Statement.from(triple))
