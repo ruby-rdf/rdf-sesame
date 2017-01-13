@@ -86,6 +86,18 @@ describe RDF::Sesame::Repository do
     # end
   end
 
+  describe "#namespaces" do
+    it "returns available namespaces" do
+      expect(@repository).to respond_to(:namespaces)
+      expect(@repository.namespaces).to be_instance_of(Hash)
+
+      @repository.namespaces.each do |identifier, value|
+        expect(identifier).to be_instance_of(Symbol)
+        expect(value).to be_instance_of(RDF::URI)
+      end
+    end
+  end
+
   describe "#sparql_query" do
     before(:all) do
       path = File.join(File.dirname(__FILE__), '..', '..', '..', 'etc', 'doap.nt')
