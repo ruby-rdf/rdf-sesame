@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'rdf/ntriples'
-#require 'rdf/spec/repository'
+require 'rdf/spec/repository'
 
 describe RDF::Sesame::Repository do
   let(:connection_url) do
@@ -79,7 +79,23 @@ describe RDF::Sesame::Repository do
     end
 
     # @see lib/rdf/spec/repository.rb in rdf-spec
-    # include RDF_Repository
+    # it_behaves_like 'an RDF::Repository' do
+    #   let(:repository) do
+    #     @repository
+    #   end
+    # end
+  end
+
+  describe "#namespaces" do
+    it "returns available namespaces" do
+      expect(@repository).to respond_to(:namespaces)
+      expect(@repository.namespaces).to be_instance_of(Hash)
+
+      @repository.namespaces.each do |identifier, value|
+        expect(identifier).to be_instance_of(Symbol)
+        expect(value).to be_instance_of(RDF::Vocabulary)
+      end
+    end
   end
 
   describe "#sparql_query" do
