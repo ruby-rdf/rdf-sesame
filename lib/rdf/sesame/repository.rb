@@ -184,7 +184,7 @@ module RDF::Sesame
       response = server.get(path(:namespaces), Server::ACCEPT_JSON)
       json = ::JSON.parse(response.body)
       json['results']['bindings'].each_with_object({}) do |binding, namespaces|
-        namespaces[binding['prefix']['value'].to_sym] = RDF::URI.new(binding['namespace']['value'])
+        namespaces[binding['prefix']['value'].to_sym] = RDF::Vocabulary.new(binding['namespace']['value'])
       end
     end
 

@@ -93,7 +93,7 @@ describe RDF::Sesame::Repository do
 
       @repository.namespaces.each do |identifier, value|
         expect(identifier).to be_instance_of(Symbol)
-        expect(value).to be_instance_of(RDF::URI)
+        expect(value).to be_instance_of(RDF::Vocabulary)
       end
     end
   end
