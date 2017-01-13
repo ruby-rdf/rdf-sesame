@@ -442,6 +442,16 @@ module RDF::Sesame
       response.code == "204"
     end
 
+    ##
+    # @private
+    # @see RDF::Mutable#delete
+    #
+    # Optimization to remove multiple statements in one query
+    def delete_statements(statements)
+      data = "DELETE DATA { #{statements_to_text_plain(statements)} }"
+      write_query data, 'sparql', {}
+    end
+
   private
 
     # Convert a list of statements to a text-plain-compatible text.
