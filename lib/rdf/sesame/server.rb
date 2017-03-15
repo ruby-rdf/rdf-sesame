@@ -42,6 +42,7 @@ module RDF::Sesame
   class Server
     include Enumerable
 
+    ACCEPT_RDF_JSON = {'Accept' => 'application/rdf+json'}.freeze
     ACCEPT_JSON = {'Accept' => 'application/sparql-results+json'}.freeze
     ACCEPT_NTRIPLES = {'Accept' => 'text/plain'}.freeze
     ACCEPT_XML  = {'Accept' => 'application/sparql-results+xml'}.freeze
@@ -60,6 +61,7 @@ module RDF::Sesame
     RESULT_BOOL = 'text/boolean'.freeze
     RESULT_JSON = 'application/sparql-results+json'.freeze
     RESULT_XML = 'application/sparql-results+xml'.freeze
+    RESULT_RDF_JSON = 'application/rdf+json'.freeze
 
     # @return [Connection]
     attr_reader :connection

@@ -321,7 +321,9 @@ module RDF::Sesame
       if queryLn == 'sparql' and options[:format].nil? and query =~ /\bconstruct\b/i
         options[:format] = Server::ACCEPT_NTRIPLES
       end
+
       options[:format] = Server::ACCEPT_JSON unless options[:format]
+      options[:parsing] = :full unless options[:parsing]
 
       parameters = { :query => query, :queryLn => queryLn, :infer => options[:infer] }
 
@@ -339,7 +341,12 @@ module RDF::Sesame
         server.get(url, options[:format])
       end
 
-      results = parse_response(response)
+      results = if (options[:parsing] == :full)
+        parse_response(response)
+      else
+        raw_parse_response(response)
+      end
+
       if block_given?
         results.each {|s| yield s }
       else
@@ -481,12 +488,40 @@ module RDF::Sesame
     end
 
     ##
+    # @param [Net::HTTPSuccess] response
+    # @param [Hash{Symbol => Object}] options
+    # @return [Object]
+    def raw_parse_response(response, options = {})
+      case content_type = options[:content_type] || response.content_type
+        when Server::RESULT_BOOL
+          response.body == 'true'
+        when Server::RESULT_JSON, Server::RESULT_RDF_JSON
+          self.class.parse_json(response.body)
+        when Server::RESULT_XML
+          self.class.parse_xml(response.body)
+        else
+          response.body
+      end
+    end
+
+    def self.parse_json(json)
+      require 'json' unless defined?(::JSON)
+      json = JSON.parse(json.to_s) unless json.is_a?(Hash)
+    end
+
+    def self.parse_xml(xml)
+      xml.force_encoding(::Encoding::UTF_8) if xml.respond_to?(:force_encoding)
+      require 'rexml/document' unless defined?(::REXML::Document)
+      xml = REXML::Document.new(xml).root unless xml.is_a?(REXML::Element)
+      xml
+    end
+
+    ##
     # @param [String, Hash] json
     # @return [<RDF::Query::Solutions>]
     # @see http://www.w3.org/TR/rdf-sparql-json-res/#results
     def self.parse_json_bindings(json, nodes = {})
-      require 'json' unless defined?(::JSON)
-      json = JSON.parse(json.to_s) unless json.is_a?(Hash)
+      json = self.parse_json(json)
 
       case
         when json['boolean']
@@ -526,9 +561,7 @@ module RDF::Sesame
     # @return [<RDF::Query::Solutions>]
     # @see http://www.w3.org/TR/rdf-sparql-json-res/#results
     def self.parse_xml_bindings(xml, nodes = {})
-      xml.force_encoding(::Encoding::UTF_8) if xml.respond_to?(:force_encoding)
-      require 'rexml/document' unless defined?(::REXML::Document)
-      xml = REXML::Document.new(xml).root unless xml.is_a?(REXML::Element)
+      xml = self.parse_xml(xml)
 
       case
         when boolean = xml.elements['boolean']

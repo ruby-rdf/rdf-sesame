@@ -109,7 +109,11 @@ describe RDF::Sesame::Repository do
     end
 
     let(:execution) do
-      @repository.sparql_query(query)
+      @repository.sparql_query(query, options)
+    end
+
+    let(:options) do
+      { }
     end
 
     context "with a SELECT query" do
@@ -117,9 +121,25 @@ describe RDF::Sesame::Repository do
         "SELECT ?name WHERE { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> ?name }"
       end
 
-      it "returns a RDF::Query::Solutions" do
-        expect(execution).to be_kind_of(RDF::Query::Solutions)
-        expect(execution).not_to be_empty
+      context "with a full parsing" do
+        let(:options) do
+          { parsing: :full }
+        end
+
+        it "returns a RDF::Query::Solutions" do
+          expect(execution).to be_kind_of(RDF::Query::Solutions)
+          expect(execution).not_to be_empty
+        end
+      end
+
+      context "with a raw parsing" do
+        let(:options) do
+          { parsing: :raw }
+        end
+
+        it "returns a Hash" do
+          expect(execution).to be_kind_of(Hash)
+        end
       end
     end
 
@@ -132,6 +152,16 @@ describe RDF::Sesame::Repository do
       it "returns a RDF::NTriples::Reader" do
         expect(execution).to be_kind_of(RDF::NTriples::Reader)
         expect(execution).to have_statement(RDF::Statement.new(RDF::URI('http://ar.to/#self'), RDF::URI('http://xmlns.com/foaf/0.1/name'), RDF::Literal('Arto Bendiken')))
+      end
+
+      context "with a raw parsing" do
+        let(:options) do
+          { parsing: :raw }
+        end
+
+        it "returns a Hash" do
+          expect(execution).to be_kind_of(String)
+        end
       end
     end
 
