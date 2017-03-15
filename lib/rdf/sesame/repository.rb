@@ -622,7 +622,7 @@ module RDF::Sesame
         if c == 'null' or !c
           c
         else
-          RDF::NTriples.serialize(RDF::URI.new(c))
+          RDF::NTriples.serialize(RDF::URI(c))
         end
       end
 
