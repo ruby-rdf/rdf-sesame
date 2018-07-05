@@ -187,19 +187,12 @@ module RDF::Sesame
     # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e204
     def repositories
       require 'json' unless defined?(::JSON)
-
       response = get(:repositories, ACCEPT_JSON)
 
       json = ::JSON.parse(response.body)
       json['results']['bindings'].inject({}) do |repositories, binding|
-        repository_id = binding['id']['value']
-        repository = Repository.new(:server   => self,
-                                    :uri      => RDF::URI.new(binding['uri']['value']),
-                                    :id       => repository_id,
-                                    :title    => binding['title']['value'],
-                                    :readable => binding['readable']['value'].to_s == 'true',
-                                    :writable => binding['writable']['value'].to_s == 'true')
-        repositories.merge!(repository_id => repository)
+        repository = parse_repository(binding)
+        repositories.merge!(repository.id => repository)
       end
     end
 
@@ -250,6 +243,19 @@ module RDF::Sesame
           raise ServerError.new(response.body)
         end
       end
+    end
+
+    private
+
+    def parse_repository(json)
+      Repository.new(
+        server:   self,
+        uri:      RDF::URI.new(json['uri']['value']),
+        id:       json['id']['value'],
+        title:    json.has_key?('title') ? json['title']['value'] : nil,
+        readable: json['readable']['value'].to_s == 'true',
+        writable: json['writable']['value'].to_s == 'true'
+      )
     end
 
   end # class Server
