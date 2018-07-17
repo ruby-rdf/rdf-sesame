@@ -358,7 +358,7 @@ module RDF::Sesame
 
     def url(path)
       if path
-        "#{@url}/#{path}"
+        File.join(@url.to_s, path.to_s)
       else
         @url.to_s
       end
