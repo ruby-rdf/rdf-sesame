@@ -2,7 +2,7 @@ module RDF; module Sesame
   module VERSION
     MAJOR = 3
     MINOR = 0
-    TINY  = 0
+    TINY  = 1
     EXTRA = nil
 
     STRING = [MAJOR, MINOR, TINY, EXTRA].compact.join('.')
