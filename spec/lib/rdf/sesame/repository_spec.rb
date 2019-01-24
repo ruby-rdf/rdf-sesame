@@ -98,6 +98,50 @@ describe RDF::Sesame::Repository do
     end
   end
 
+require 'securerandom'
+
+class UpdateGraph
+  attr_reader :uris, :graph
+
+  ILLUSTRATION_URI = RDF::URI.new('http://www.perfect-memory.com/ontology/rtlbelgium/1.1#illustrationGroup')
+
+  def initialize(size: 500)
+    @uris = []
+    @graph = generate_graph(size)
+    @uris.uniq!
+  end
+
+  def generate_graph(times)
+    RDF::Graph.new.tap do |g|
+      resource_uri = RDF::URI.new('http://resource/root')
+
+      times.times do
+        component = RDF::URI.new("http://target/#{SecureRandom.uuid}")
+
+        g << [
+          resource_uri,
+          ILLUSTRATION_URI,
+          component
+        ]
+
+        g << [
+          component,
+          RDF.type,
+          RDF::URI.new('http://type/default')
+        ]
+
+        g << [
+          component,
+          RDF.type,
+          RDF::URI.new("http://type/#{rand(100)}")
+        ]
+
+        @uris << resource_uri
+      end
+    end
+  end
+end
+
   describe "#sparql_query" do
     before(:all) do
       path = File.join(File.dirname(__FILE__), '..', '..', '..', 'etc', 'doap.nt')
@@ -114,6 +158,20 @@ describe RDF::Sesame::Repository do
 
     let(:options) do
       { }
+    end
+
+    def statements_to_text_plain(graph)
+      RDF::NTriples::Writer.dump(graph, nil, encoding: Encoding::ASCII)
+    end
+
+    context "with a UPDATE query" do
+      let(:query) do
+        "INSERT DATA { <http://ar.to/#self> <http://xmlns.com/foaf/0.1/name> \"Arthur\" }"
+      end
+
+      it "returns true" do
+        expect(execution).to be_truthy
+      end
     end
 
     context "with a SELECT query" do

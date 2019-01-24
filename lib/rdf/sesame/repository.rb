@@ -331,14 +331,7 @@ module RDF::Sesame
         headers = Server::CONTENT_TYPE_X_FORM.merge(options[:format])
         server.post(path, Addressable::URI.form_encode(parameters), headers)
       else
-        params = Addressable::URI.form_encode(parameters).gsub("+", "%20").to_s
-        url = Addressable::URI.parse(path)
-        unless url.normalize.query.nil?
-          url.query = [url.query, params].compact.join('&')
-        else
-          url.query = [url.query, params].compact.join('?')
-        end
-        server.get(url, options[:format])
+        server.get(encode_url_parameters(path, parameters), options[:format])
       end
 
       results = if (options[:parsing] == :full)
@@ -364,10 +357,14 @@ module RDF::Sesame
     # @param  [Hash]                 options
     # @return [Boolean]
     def write_query(query, queryLn, options)
-      parameters = {}
-      parameters[:update] = query
-      parameters[:infer] = options[:infer]
-      response = server.post(path(:statements), Addressable::URI.form_encode(parameters), Server::CONTENT_TYPE_X_FORM)
+      parameters = { infer: options[:infer] }
+
+      response = server.post(
+        encode_url_parameters(path(:statements), parameters),
+        query,
+        Server::CONTENT_TYPE_SPARQL_UPDATE
+      )
+
       response.code == "204"
     end
 
@@ -640,6 +637,22 @@ module RDF::Sesame
       options = {}
       options[:context] = @context if @context
       options
+    end
+
+    # @private
+    #
+    # Encode in the URL parameters
+    def encode_url_parameters(path, parameters)
+      params = Addressable::URI.form_encode(parameters).gsub("+", "%20").to_s
+      url = Addressable::URI.parse(path)
+
+      unless url.normalize.query.nil?
+        url.query = [url.query, params].compact.join('&')
+      else
+        url.query = [url.query, params].compact.join('?')
+      end
+
+      url
     end
 
     # @private

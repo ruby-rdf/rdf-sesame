@@ -57,6 +57,7 @@ module RDF::Sesame
 
     CONTENT_TYPE_TEXT = {'Content-Type' => 'text/plain'}.freeze
     CONTENT_TYPE_X_FORM = {'Content-Type' => 'application/x-www-form-urlencoded' }.freeze
+    CONTENT_TYPE_SPARQL_UPDATE = {'Content-Type' => 'application/sparql-update'}.freeze
 
     RESULT_BOOL = 'text/boolean'.freeze
     RESULT_JSON = 'application/sparql-results+json'.freeze
