@@ -325,14 +325,13 @@ module RDF::Sesame
       options[:format] = Server::ACCEPT_JSON unless options[:format]
       options[:parsing] = :full unless options[:parsing]
 
-      parameters = { :query => query, :queryLn => queryLn, :infer => options[:infer] }
+      parameters = { :queryLn => queryLn, :infer => options[:infer] }
 
-      response = if query.size > MAX_LENGTH_GET_QUERY
-        headers = Server::CONTENT_TYPE_X_FORM.merge(options[:format])
-        server.post(path, Addressable::URI.form_encode(parameters), headers)
-      else
-        server.get(encode_url_parameters(path, parameters), options[:format])
-      end
+      response = server.post(
+        encode_url_parameters(path, parameters),
+        query,
+        Server::CONTENT_TYPE_SPARQL_QUERY.merge(options[:format])
+      )
 
       results = if (options[:parsing] == :full)
         parse_response(response)
