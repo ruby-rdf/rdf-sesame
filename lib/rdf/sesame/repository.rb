@@ -325,21 +325,13 @@ module RDF::Sesame
       options[:format] = Server::ACCEPT_JSON unless options[:format]
       options[:parsing] = :full unless options[:parsing]
 
-      parameters = { :query => query, :queryLn => queryLn, :infer => options[:infer] }
+      parameters = { :queryLn => queryLn, :infer => options[:infer] }
 
-      response = if query.size > MAX_LENGTH_GET_QUERY
-        headers = Server::CONTENT_TYPE_X_FORM.merge(options[:format])
-        server.post(path, Addressable::URI.form_encode(parameters), headers)
-      else
-        params = Addressable::URI.form_encode(parameters).gsub("+", "%20").to_s
-        url = Addressable::URI.parse(path)
-        unless url.normalize.query.nil?
-          url.query = [url.query, params].compact.join('&')
-        else
-          url.query = [url.query, params].compact.join('?')
-        end
-        server.get(url, options[:format])
-      end
+      response = server.post(
+        encode_url_parameters(path, parameters),
+        query,
+        Server::CONTENT_TYPE_SPARQL_QUERY.merge(options[:format])
+      )
 
       results = if (options[:parsing] == :full)
         parse_response(response)
@@ -364,10 +356,14 @@ module RDF::Sesame
     # @param  [Hash]                 options
     # @return [Boolean]
     def write_query(query, queryLn, options)
-      parameters = {}
-      parameters[:update] = query
-      parameters[:infer] = options[:infer]
-      response = server.post(path(:statements), Addressable::URI.form_encode(parameters), Server::CONTENT_TYPE_X_FORM)
+      parameters = { infer: options[:infer] }
+
+      response = server.post(
+        encode_url_parameters(path(:statements), parameters),
+        query,
+        Server::CONTENT_TYPE_SPARQL_UPDATE
+      )
+
       response.code == "204"
     end
 
@@ -640,6 +636,22 @@ module RDF::Sesame
       options = {}
       options[:context] = @context if @context
       options
+    end
+
+    # @private
+    #
+    # Encode in the URL parameters
+    def encode_url_parameters(path, parameters)
+      params = Addressable::URI.form_encode(parameters).gsub("+", "%20").to_s
+      url = Addressable::URI.parse(path)
+
+      unless url.normalize.query.nil?
+        url.query = [url.query, params].compact.join('&')
+      else
+        url.query = [url.query, params].compact.join('?')
+      end
+
+      url
     end
 
     # @private
