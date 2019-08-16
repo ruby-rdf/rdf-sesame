@@ -325,12 +325,10 @@ module RDF::Sesame
         request.body = data.to_s
         request.basic_auth @user, @pass unless @user.nil? || @pass.nil?
         response = http.request(request)
-        http.request(request) do |response|
-          if block_given?
-            yield response
-          else
-            response
-          end
+        if block_given?
+          yield response
+        else
+          response
         end
       end
     end
