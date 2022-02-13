@@ -4,7 +4,7 @@ Sesame 2.0 Adapter for RDF.rb
 This is an [RDF.rb][] plugin that adds support for [Sesame 2.0][]-compatible
 RDF repositories accessed using Sesame's [HTTP API][Sesame API].
 
-* <http://github.com/bendiken/rdf-sesame>
+* <https://github.com/ruby-rdf/rdf-sesame>
 
 Documentation
 -------------
@@ -106,5 +106,5 @@ see <http://unlicense.org/> or the accompanying {file:UNLICENSE} file.
 
 [RDF.rb]:          http://rdf.rubyforge.org/
 [RDF::Repository]: http://rdf.rubyforge.org/RDF/Repository.html
-[Sesame 2.0]:      http://www.openrdf.org/
-[Sesame API]:      http://www.openrdf.org/doc/sesame2/system/ch08.html
+[Sesame 2.0]:      https://rdf4j.org/
+[Sesame API]:      http://archive.rdf4j.org/system/ch08.html
