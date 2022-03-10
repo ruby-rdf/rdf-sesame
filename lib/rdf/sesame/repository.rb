@@ -291,6 +291,27 @@ module RDF::Sesame
       raw_query(query, 'sparql', options, &block)
     end
 
+    # Run a raw SPARQL query.
+    #
+    # @overload sparql_query(query) {|solution| ... }
+    #   @yield solution
+    #   @yieldparam [RDF::Query::Solution] solution
+    #   @yieldreturn [void]
+    #   @return [void]
+    #
+    # @overload sparql_query(pattern)
+    #   @return [Enumerator<RDF::Query::Solution>]
+    #
+    # @param [String] query The query to run.
+    # @param [Hash{Symbol => Object}] options
+    #   The query options (see build_query).
+    # @return [void]
+    #
+    # @see #build_query
+    def sparql_query(query, options={}, &block)
+      raw_query(query, 'sparql', options, &block)
+    end
+
     ##
     # Returns all statements of the given query when the query
     # is a READ query. Execute a WRITE query and returns the
