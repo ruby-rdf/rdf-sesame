@@ -566,9 +566,9 @@ module RDF::Sesame
         when :uri
           RDF::URI.new(value['value'])
         when :literal
-          RDF::Literal.new(value['value'], :language => value['xml:lang'])
-        when :'typed-literal'
-          RDF::Literal.new(value['value'], :datatype => value['datatype'])
+          RDF::Literal.new(value['value'],
+            language: value['xml:lang'],
+            datatype: value['datatype'])
         else nil
       end
     end
