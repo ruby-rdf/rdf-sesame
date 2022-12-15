@@ -84,7 +84,7 @@ module RDF::Sesame
           raise ArgumentError, "expected String, RDF::URI or Hash, but got #{url_or_options.inspect}"
       end
 
-      super(options)
+      super(**options)
     end
 
     #
