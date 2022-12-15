@@ -53,13 +53,13 @@ describe RDF::Sesame::Server do
 
   it "indicates whether a repository exists" do
     expect(subject).to respond_to(:has_repository?)
-    expect(subject.has_repository?(:SYSTEM)).to be true
+    expect(subject.has_repository?(@repository.id)).to be true
     expect(subject.has_repository?(:foobar)).to be false
   end
 
   it "returns existing repositories" do
     expect(subject).to respond_to(:repository, :[])
-    repository = subject.repository(:SYSTEM)
+    repository = subject.repository(@repository.id)
     expect(repository).not_to be_nil
     expect(repository).to be_instance_of(RDF::Sesame::Repository)
   end
